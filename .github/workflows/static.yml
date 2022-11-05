@@ -2,6 +2,9 @@
 name: Deploy static content to Pages
 
 on:
+  schedule:
+    - cron: '20 0 * * *'
+
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
@@ -21,6 +24,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every time
+        run: echo "This step will always run"
+
   # Single deploy job since we're just deploying
   deploy:
     environment:

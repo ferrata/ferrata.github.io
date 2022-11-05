@@ -35,7 +35,7 @@ jobs:
       - name: Check if anything changed
         id: verify_diff
         run: |
-          git diff --quiet ./feed.atom || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit files
         if: steps.verify_diff.outputs.changed == 'true'

@@ -32,6 +32,15 @@ jobs:
         # run: wget https://world.hey.com/ferrata/feed.atom
       - run: |
           curl https://world.hey.com/ferrata/feed.atom > ./feed.atom
+
+      - name: Check if changed
+        id: verify_diff
+        run: |
+          git diff --quiet ./feed.atom || echo "::set-output name=new_translations_exist::true"
+
+      - name: Commit files
+        if: steps.verify_diff.outputs.new_translations_exist == 'true'
+        run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .

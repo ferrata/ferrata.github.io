@@ -27,7 +27,6 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Download feed
       - uses: actions/checkout@v3
         # if: github.event.schedule == '20 0 * * *'
         # run: wget https://world.hey.com/ferrata/feed.atom

@@ -28,8 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download feed
+      - uses: actions/checkout@v3
         # if: github.event.schedule == '20 0 * * *'
-        run: wget https://world.hey.com/ferrata/feed.atom
+        # run: wget https://world.hey.com/ferrata/feed.atom
+      - run: |
+          wget https://world.hey.com/ferrata/feed.atom
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "generated"
+          git push
 
   # Single deploy job since we're just deploying
   deploy:

@@ -1,0 +1,11 @@
+--2022-11-05 06:31:28--  https://world.hey.com/ferrata/feed.atom
+Resolving world.hey.com (world.hey.com)... 108.138.159.119, 108.138.159.70, 108.138.159.112, ...
+Connecting to world.hey.com (world.hey.com)|108.138.159.119|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/atom+xml]
+Saving to: ‘feed.atom.2’
+
+     0K .......... .......... ..                               14.4M=0.002s
+
+2022-11-05 06:31:28 (14.4 MB/s) - ‘feed.atom.2’ saved [23363]
+

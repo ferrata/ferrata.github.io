@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download feed
-        if: github.event.schedule == '20 0 * * *'
+        # if: github.event.schedule == '20 0 * * *'
         run: wget https://world.hey.com/ferrata/feed.atom
 
   # Single deploy job since we're just deploying

@@ -24,11 +24,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  schedule:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Every time
-        run: echo "This step will always run"
+      - name: Download feed
+        if: github.event.schedule == '20 0 * * *'
+        run: wget https://world.hey.com/ferrata/feed.atom
 
   # Single deploy job since we're just deploying
   deploy:

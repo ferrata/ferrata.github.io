@@ -35,10 +35,10 @@ jobs:
       - name: Check if anything changed
         id: verify_diff
         run: |
-          git diff --quiet . || echo "::set-output name=new_translations_exist::true"
+          git diff --quiet . || run: echo "{changed}={true}" >> $GITHUB_OUTPUT
 
       - name: Commit files
-        if: steps.verify_diff.outputs.new_translations_exist == 'true'
+        if: steps.verify_diff.outputs.changed == 'true'
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com

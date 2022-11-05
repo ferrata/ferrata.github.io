@@ -31,7 +31,7 @@ jobs:
         # if: github.event.schedule == '20 0 * * *'
         # run: wget https://world.hey.com/ferrata/feed.atom
       - run: |
-          wget -q https://world.hey.com/ferrata/feed.atom --output-file ./feed.atom
+          wget https://world.hey.com/ferrata/feed.atom --output-file ./feed.atom
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .

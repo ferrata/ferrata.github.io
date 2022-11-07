@@ -38,7 +38,7 @@ jobs:
         # https://stackoverflow.com/a/74325815/8607180
         # https://stackoverflow.com/a/857696/8607180
         run: |
-          git add -N ./feed.atom
+          git add -N ./public/feed.atom
           git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
         
       - name: Commit files

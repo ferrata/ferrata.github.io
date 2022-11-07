@@ -7,42 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="static/img/avatar.jpg" sizes="16x16 32x32" type="image/jpg">
   <link rel="me" href="https://mastodon.online/@ferrata">
+  <link href="/css/styles.css" rel="stylesheet">
   <title>ferrata.dev</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          keyframes: {
-            working: {
-              '0%': { transform: 'translateY(0) rotate(0deg)' },
-              '25%': { transform: 'translateY(5px)' },
-              '50%': { transform: 'translateY(-2px) rotate(-1deg)' },
-              '75%': { transform: 'translateY(3px)' },
-              '100%': { transform: 'translateY(0) rotate(0deg)' }
-            },
-            jumping: {
-              '0%': { transform: 'translateY(0) rotate(0deg)' },
-              '25%': { transform: 'translateY(5px) rotate(2deg)' },
-              '50%': { transform: 'translateY(-2px)' },
-              '75%': { transform: 'translateY(3px)' },
-              '100%': { transform: 'translateY(0) rotate(0deg)' }
-            },
-            dropping: {
-              '0%': { transform: 'translateX(10px) translateY(-75px) rotate(12deg)' },
-              '75%': { transform: 'translateX(5px) rotate(3deg)' },
-              '100%': { transform: 'translateY(-2px) rotate(-3deg)' }
-            }
-          },
-          animation: {
-            working: 'working 0.15s ease-in-out infinite',
-            jumping: 'jumping 0.15s ease-in-out infinite',
-            dropping: 'dropping 0.15s ease-in 1',
-          }
-        },
-      },
-    }
-  </script>
 </head>
 
 <body class="bg-white dark:bg-gray-800">
@@ -66,7 +32,8 @@
       </p>
       <a href="https://world.hey.com/ferrata">
         <p class="mb-3 text-3xl text-center dark:text-slate-400">
-          Meanwhile you can read <a class="text-blue-600 dark:text-blue-500 hover:underline" href="https://world.hey.com/ferrata">my
+          Meanwhile you can read <a class="text-blue-600 dark:text-blue-500 hover:underline"
+            href="https://world.hey.com/ferrata">my
             blog</a>
         </p>
       </a>

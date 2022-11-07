@@ -67,6 +67,7 @@ jobs:
       # https://github.com/actions/checkout/issues/439
       - run: |
           git pull origin $BRANCH_NAME
+          npm install
           npm run build
 
       - name: Setup Pages

@@ -27,14 +27,12 @@
       audio.appendChild(createSource("static/audio/construction.ogg", "audio/ogg"));
       audio.play();
       audio.muted = soundIsMuted;
-      console.log('sound on')
     }
 
     function soundOff() {
       let audio = document.getElementById('construction-audio');
       audio.muted = true;
       audio.replaceChildren([]);
-      console.log('sound off')
     }
 
     function toggleSound() {

@@ -11,73 +11,19 @@
   <link rel="icon" href="static/img/avatar.jpg" sizes="16x16 32x32" type="image/jpg">
   <link rel="me" href="https://mastodon.online/@ferrata">
   <link rel="me" href="https://mastodon.cloud/@ferrata">
-  <script>
-    let soundIsMuted = true;
-
-    function createSource(src, type) {
-      const source = document.createElement("source");
-      source.src = src;
-      source.type = type;
-      return source;
-    }
-
-    function soundOn() {
-      let audio = document.getElementById('construction-audio');
-      audio.appendChild(createSource("static/audio/construction.mp3", "audio/mpeg"));
-      audio.appendChild(createSource("static/audio/construction.ogg", "audio/ogg"));
-      audio.play();
-      audio.muted = soundIsMuted;
-      console.log('sound on')
-    }
-
-    function soundOff() {
-      let audio = document.getElementById('construction-audio');
-      audio.muted = true;
-      audio.replaceChildren([]);
-      console.log('sound off')
-    }
-
-    function toggleSound() {
-      soundIsMuted = !soundIsMuted;
-      let muted = document.getElementById('sound-muted');
-      let unmuted = document.getElementById('sound-unmuted');
-
-      if (soundIsMuted) {
-        unmuted.style.display = "none";
-        muted.style.display = "block";
-        muted.style.visibility = "visible";
-      } else {
-        muted.style.display = "none";
-        unmuted.style.display = "block";
-        unmuted.style.visibility = "visible";
-      }
-    }
-
-  </script>
 </head>
 
 <body class="bg-white dark:bg-gray-800">
   <div class="flex items-center justify-center h-screen">
     <div class="flex flex-col items-center justify-center max-w-2xl fixed">
-      <audio id="construction-audio" muted="true" loop="true"></audio>
-      <div class="group cursor-pointer" onmouseover="soundOn()" onmouseleave="soundOff()">
+      <div class="group cursor-pointer">
         <img
           class="animate-dropping group-active:animate-jumping group-hover:animate-jumping object-cover w-auto h-72 content-center absolute z-40 -top-24 translate-x-4 rotate-12"
           src="static/img/hard-hat.png" />
         <img class="group-active:animate-working group-hover:animate-working object-cover w-26 h-26 rounded-full z-0"
           src="static/img/avatar.jpg" />
       </div>
-      <div class="rounded-full p-2 absolute right-8 -translate-y-3/4">
-        <button onclick="toggleSound()" class="cursor-pointer text-2xl">
-          <div id="sound-muted" class="visible">
-            <i class="fa-solid fa-volume-xmark text-slate-500 dark:text-slate-400"></i>
-          </div>
-          <div id="sound-unmuted" class="hidden">
-            <i class="fa-solid fa-volume-high text-slate-500 dark:text-slate-400"></i>
-          </div>
-        </button>
-      </div>
-      <p class="mb-3 sm:text-base md:text-3xl text-center">&nbsp;
+      <p class="mb-3 text-3xl text-center">&nbsp;
       </p>
 
       <p class="mb-3 text-3xl text-center text-slate-600 dark:text-slate-400">
@@ -92,7 +38,7 @@
           blog</a>
         <br />or find me somewhere here:
       </p>
-      <div class="text-4xl text-slate-500 dark:text-slate-400">
+      <div class="text-4xl text-slate-600 dark:text-slate-400">
         <a class="hover:animate-pulse" href="https://github.com/ferrata"><i class="fa-brands fa-github"></i></a>
         <a class="hover:animate-pulse" href="https://stackoverflow.com/users/8607180/sasha"><i class="fa-brands fa-stack-overflow"></i></a>
         <a class="hover:animate-pulse" href="https://mastodon.cloud/@ferrata"><i class="fa-brands fa-mastodon"></i></a>

@@ -4,7 +4,60 @@
   <link rel="alternate" type="text/html" href="https://world.hey.com/ferrata"/>
   <link rel="self" type="application/atom+xml" href="https://world.hey.com/ferrata/feed.atom"/>
   <title>Sasha Goloshchapov</title>
-  <updated>2022-11-05T03:19:15Z</updated>
+  <updated>2022-11-23T15:31:35Z</updated>
+  <entry>
+    <id>tag:world.hey.com,2005:World::Post/24319</id>
+    <published>2022-11-23T15:31:35Z</published>
+    <updated>2022-11-23T15:31:35Z</updated>
+    <link rel="alternate" type="text/html" href="https://world.hey.com/ferrata/github-app-authentication-in-darklang-09f45920"/>
+    <title>GitHub App authentication in darklang</title>
+    <content type="html">&lt;div class="trix-content"&gt;
+  &lt;div&gt;My friend introduced me to a project named &lt;a href="https://darklang.com/"&gt;darklang&lt;/a&gt;, or simply Dark. It's a serverless and deployless backend builder. A unique approach that sets it apart (at least for me) is stated on its &lt;a href="https://docs.darklang.com/introduction"&gt;Introduction page&lt;/a&gt;:&lt;br&gt;&lt;br&gt;&lt;/div&gt;&lt;blockquote&gt;&lt;em&gt;Darklang is an integrated language, framework, and editor for building web backends: REST API endpoints, asynchronous background workers, scheduled jobs, and persistent storage. Dark's framework is tightly coupled to the infrastructure, and as you write code you're able to develop from real incoming requests/traces.&lt;/em&gt;&lt;/blockquote&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Also, it is a &lt;a href="https://docs.darklang.com/discussion/languageoverview"&gt;functional language&lt;/a&gt;!&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;blockquote&gt;&lt;em&gt;Dark is a statically-typed functional/imperative hybrid, based loosely on ML. Dark has implicit returns, and makes heavy use of pipelines and functions like List::map&lt;/em&gt;&lt;/blockquote&gt;&lt;div&gt;&lt;br&gt;So, having quite a bit of backend and API experience, I was intrigued! But mainly, I wanted to test-drive Dark and see how it felt.&lt;br&gt;&lt;br&gt;I started a small project that I will share later; it uses &lt;a href="https://docs.github.com/en/rest"&gt;GitHub API&lt;/a&gt; with &lt;a href="https://docs.github.com/en/rest/apps/apps"&gt;App access&lt;/a&gt;, and I needed a way to authenticate my GitHub app. Since Dark is under active development, it doesn't have all the bells and whistles yet, but it's impressive how many features are already implemented. &lt;br&gt;&lt;br&gt;This is a small, wanna-be-guide on creating and authenticating your GitHub app with Dark. &lt;br&gt;&lt;br&gt;1. &lt;a href="https://docs.github.com/en/developers/apps/building-github-apps/creating-a-github-app"&gt;Create&lt;/a&gt; a new GitHub App&lt;br&gt;&lt;br&gt;2. &lt;a href="https://docs.github.com/en/developers/apps/building-github-apps/authenticating-with-github-apps#generating-a-private-key"&gt;Generate&lt;/a&gt; a private key&lt;br&gt;&lt;br&gt;3. Add secrets to your project in Dark:&lt;/div&gt;&lt;ul&gt;&lt;li&gt;APP_ID - contains GitHub App ID; it can be found in the About section of your GitHub App&lt;/li&gt;&lt;li&gt;APP_PEM - contains a PEM certificate from the previous step&lt;/li&gt;&lt;/ul&gt;&lt;div&gt;&lt;br&gt;4. Install the GitHub App into your profile&lt;br&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;5. Create a new function, &lt;em&gt;github_authenticate,&lt;/em&gt; in your Dark functions. Add the following implementation:&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;pre&gt;let now = Date::now
+let jwt = JWT::signAndEncodev1
+            APP_PEM
+            {
+              iat : now
+                    |&amp;gt;Date::toSeconds
+              exp : Date::add now 60 * 10 - 1
+                    |&amp;gt;Date::toSeconds
+              iss : APP_ID
+            }
+let headers = {
+                Accepts : &amp;quot;application/vnd.github.v3+json&amp;quot;
+              }
+              |&amp;gt;Dict::set &amp;quot;User-Agent&amp;quot; &amp;quot;DarkGithub&amp;quot;
+              |&amp;gt;Dict::merge HttpClient::bearerTokenv1 jwt
+let installation = HttpClient::getv5 &amp;quot;https://api.github.com/app/installations&amp;quot; Dict::empty headers
+                   |&amp;gt;\r -&amp;gt; r.body
+                   |&amp;gt;List::getAtv1 0
+let tokensUrl = String::join
+                  [&amp;quot;https://api.github.com/app/installations&amp;quot;,
+                   toString installation.id,&amp;quot;access_tokens&amp;quot;]
+                  &amp;quot;/&amp;quot;
+let response = HttpClient::postv5 tokensUrl Dict::empty Dict::empty headers
+Ok response.body&lt;/pre&gt;&lt;div&gt;&lt;br&gt;Here is how it looks in Dark:&lt;br&gt;&lt;br&gt;  &lt;figure class="attachment attachment--preview attachment--lightboxable attachment--png"&gt;
+      &lt;a download="image.png" title="Download image.png" data-click-proxy-target="lightbox_link_blob_1022295051" href="https://world.hey.com/ferrata/09f45920/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQXY4N2p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--cd52e4f0a19ccab2e78fba5f51e2c4d6ee04f8c9/image.png?disposition=attachment"&gt;
+        &lt;img src="https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQXY4N2p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--cd52e4f0a19ccab2e78fba5f51e2c4d6ee04f8c9/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFLQUIya0NBQVU2REhGMVlXeHBkSGxwU3pvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--9333ff4f088aa9239bed4b0a224e37f2c7bab42d/image.png" alt="image.png" srcset="https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQXY4N2p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--cd52e4f0a19ccab2e78fba5f51e2c4d6ee04f8c9/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFJQUQya0NBQW82REhGMVlXeHBkSGxwUVRvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--435325a84611f9b4e2210760d04bed2a88c1f429/image.png 2x, https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQXY4N2p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--cd52e4f0a19ccab2e78fba5f51e2c4d6ee04f8c9/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFLQUZta0NBQTg2REhGMVlXeHBkSGxwUERvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--c01f3983c1786fbe1f418ce337eaa6c9bbc6125e/image.png 3x" decoding="async" loading="lazy"&gt;
+&lt;/a&gt;
+  &lt;/figure&gt;&lt;br&gt;&lt;br&gt;Now we can test it with the following REPL:&lt;br&gt;&lt;br&gt;&lt;/div&gt;&lt;pre&gt;let auth = github_authenticate
+let headers = {
+                Accepts : &amp;quot;application/vnd.github.v3+json&amp;quot;
+              }
+              |&amp;gt;Dict::set &amp;quot;User-Agent&amp;quot; &amp;quot;DarkGithub&amp;quot;
+              |&amp;gt;Dict::merge HttpClient::bearerTokenv1 auth.token
+let response = HttpClient::getv5 &amp;quot;https://api.github.com/users/ferrata&amp;quot; Dict::empty headers
+Ok response.body&lt;/pre&gt;&lt;div&gt;&lt;br&gt;  &lt;figure class="attachment attachment--preview attachment--lightboxable attachment--png"&gt;
+      &lt;a download="image.png" title="Download image.png" data-click-proxy-target="lightbox_link_blob_1022311983" href="https://world.hey.com/ferrata/09f45920/blobs/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQzgrN3p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--33ca7dc9118d80219f3e67fd9cc9422a9b17554b/image.png?disposition=attachment"&gt;
+        &lt;img src="https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQzgrN3p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--33ca7dc9118d80219f3e67fd9cc9422a9b17554b/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFLQUIya0NBQVU2REhGMVlXeHBkSGxwU3pvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--9333ff4f088aa9239bed4b0a224e37f2c7bab42d/image.png" alt="image.png" srcset="https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQzgrN3p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--33ca7dc9118d80219f3e67fd9cc9422a9b17554b/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFJQUQya0NBQW82REhGMVlXeHBkSGxwUVRvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--435325a84611f9b4e2210760d04bed2a88c1f429/image.png 2x, https://world.hey.com/ferrata/09f45920/representations/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaHBCQzgrN3p3PSIsImV4cCI6bnVsbCwicHVyIjoiYmxvYl9pZCJ9fQ==--33ca7dc9118d80219f3e67fd9cc9422a9b17554b/eyJfcmFpbHMiOnsibWVzc2FnZSI6IkJBaDdDam9MWm05eWJXRjBTU0lJY0c1bkJqb0dSVlE2RkhKbGMybDZaVjkwYjE5c2FXMXBkRnNIYVFLQUZta0NBQTg2REhGMVlXeHBkSGxwUERvTGJHOWhaR1Z5ZXdZNkNYQmhaMlV3T2cxamIyRnNaWE5qWlZRPSIsImV4cCI6bnVsbCwicHVyIjoidmFyaWF0aW9uIn19--c01f3983c1786fbe1f418ce337eaa6c9bbc6125e/image.png 3x" decoding="async" loading="lazy"&gt;
+&lt;/a&gt;
+  &lt;/figure&gt;&lt;br&gt;&lt;br&gt;...and look! It works! 😊&lt;br&gt;&lt;br&gt;References:&lt;/div&gt;&lt;ul&gt;&lt;li&gt;&lt;a href="https://darklang.com/"&gt;https://darklang.com/&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="https://docs.darklang.com/"&gt;https://docs.darklang.com/&lt;/a&gt;&lt;/li&gt;&lt;li&gt;&lt;a href="https://docs.github.com/en/developers/apps/building-github-apps/"&gt;https://docs.github.com/en/developers/apps/building-github-apps/&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;
+&lt;/div&gt;
+</content>
+    <author>
+      <name>Sasha Goloshchapov</name>
+      <email>ferrata@hey.com</email>
+    </author>
+  </entry>
   <entry>
     <id>tag:world.hey.com,2005:World::Post/23931</id>
     <published>2022-11-05T01:19:46Z</published>

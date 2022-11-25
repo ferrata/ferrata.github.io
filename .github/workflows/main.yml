@@ -30,9 +30,12 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "SYNC_BRANCH_NAME=\"feature/chore_automated_sync_rss_$(date +%s)\"" >> $GITHUB_ENV
-          echo "SYNC_PR_TITLE=\"chore(automated): syncing RSS\"" >> $GITHUB_ENV
+      - name: Initialize
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        run: |
+          echo SYNC_BRANCH_NAME="feature/chore_automated_sync_rss_$(date +%s)" >> $GITHUB_ENV
+          echo SYNC_PR_TITLE="chore(automated): syncing RSS" >> $GITHUB_ENV
 
       - uses: actions/checkout@v3
 

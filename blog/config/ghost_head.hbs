@@ -1,0 +1,267 @@
+<link rel="icon" href="https://ferrata.dev/static/img/avatar.jpg" sizes="16x16 32x32" type="image/jpg">
+<link rel="me" href="https://hachyderm.io/@ferrata">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" />
+<link rel="stylesheet" href="https://ferrata.dev/css/styles.css">
+<link rel="stylesheet" href="https://ferrata.dev/css/prism.css">
+<script src="https://ferrata.dev/scripts/prism.js"></script>
+<style>
+  * {
+    --color-darkmode: rgb(31 41 55);
+  }
+
+  .my-avatar {
+    padding-top: 2.5rem;
+    justify-content: center;
+  }
+
+  .my-avatar-image {
+    width: 8rem;
+    height: 8rem;
+  }
+
+  .site-header-content {
+    display: none !important;
+  }
+
+  .gh-burger {
+    display: none !important;
+  }
+
+  .author-list {
+    display: none !important;
+  }
+
+  .post-feed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .post-card-title {
+    font-weight: 700;
+  }
+
+  .post-card {
+    max-width: 40em;
+  }
+
+  .post-card-tags {
+    flex-wrap: wrap;
+  }
+
+  .home-template .post-card-primary-tag::before,
+  .post-template .post-card-primary-tag a::before,
+  .tag-template .post-card-primary-tag::before {
+    content: "#";
+  }
+
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 1;
+    }
+  }
+
+  .post-card-primary-tag {
+    padding: 0.7em;
+    border-radius: 1.5em;
+    background-color: var(--ghost-accent-color);
+    color: var(--color-lightgrey);
+    animation: fadeIn 0.5s;
+  }
+
+  .post-card-primary-tag a {
+    color: var(--color-lightgrey);
+  }
+
+  .article-title {
+    font-weight: 700;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: auto;
+  }
+
+  li {
+    line-height: 1.2em;
+  }
+
+  ol,
+  ul {
+    padding: revert;
+  }
+
+  .site-footer .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .site-footer .inner .copyright {
+    display: none;
+  }
+
+  .site-footer .inner .site-footer-nav {
+    display: none;
+  }
+
+  code[class*=language-],
+  pre[class*=language-] {
+    text-shadow: initial;
+  }
+
+  pre.line-numbers {
+    white-space: pre-wrap;
+  }
+
+  .copy-to-clipboard-button {
+    margin-top: 0.5em !important;
+    font-size: 1em !important;
+  }
+
+  button.copy-to-clipboard-button::before {
+    font-family: FontAwesome;
+    font-weight: normal;
+    font-style: normal;
+    display: inline-block;
+    text-decoration: inherit;
+    padding-right: 0.5em;
+    padding-bottom: 0.5em;
+
+    content: "\f328";
+  }
+
+  @media (min-width: 1001px) {
+    .post-card-large {
+      display: initial;
+    }
+  }
+
+  @media (max-width: 991px) {
+    .my-avatar {
+      padding-left: max(4vmin, 20px);
+      justify-content: left;
+    }
+
+    .my-avatar-image {
+      width: 6rem;
+      height: 6rem;
+    }
+
+    .site-footer .inner {
+      flex-direction: row;
+    }
+  }
+
+  .gh-portal-triggerbtn-container:before {
+    background: 0xff0000 !important;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    * {
+      --color-secondary-text: rgb(235 232 229);
+    }
+
+    ::selection {
+      background: var(--ghost-accent-color);
+    }
+
+    .gh-head-logo {
+      color: rgb(235 232 229);
+    }
+
+    html.auto-color .post-card-featured,
+    html.auto-color .post-card-title {
+      color: rgb(235 232 229);
+    }
+
+    html.auto-color .article-title,
+    html.auto-color .author-profile-location,
+    html.auto-color .author-profile-social-link:hover {
+      color: rgb(235 232 229);
+    }
+
+    html.auto-color .footer-cta-title,
+    html.auto-color .kg-header-card h2.kg-header-card-header,
+    html.auto-color .kg-header-card h3.kg-header-card-subheader {
+      color: rgb(235 232 229);
+    }
+
+    html.auto-color :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content) {
+      color: inherit;
+    }
+
+    .footer-cta-button {
+      --color-secondary-text: #000;
+    }
+
+    .language-css .token.string,
+    .style .token.string,
+    .token.entity,
+    .token.operator,
+    .token.url {
+      background: initial;
+    }
+  }
+</style>
+<script defer>
+  // loading extra tags
+  fetch("https://blog.ferrata.dev/rss")
+    .then(response => response.text())
+    .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+    .then(data => {
+      const extraTags = {};
+      const items = data.querySelectorAll("item");
+      items.forEach(item => {
+        const postUrl = item.querySelector("link").innerHTML;
+        extraTags[postUrl] = []
+
+        const tags = item.querySelectorAll("category");
+        tags.forEach((tag, index) => {
+          if (index > 0) {
+            extraTags[postUrl].push(tag.firstChild?.wholeText?.trim())
+          }
+        });
+      });
+      return extraTags;
+    })
+    .then(allExtraTags => {
+      if (document.body.classList.contains("post-template")) {
+        const extraTags = allExtraTags[document.location] ?? [];
+        const tags = document.body.querySelector("div.post-card-tags");
+
+        if (!!tags && extraTags.length > 0) {
+          extraTags.forEach(
+            extraTag => tags.insertAdjacentHTML("beforeend", `
+              <span class="post-card-primary-tag">
+                <a href="/tag/${extraTag}/">${extraTag}</a>
+                </span>`)
+          );
+        }
+      } else {
+        const posts = document.querySelectorAll("a.post-card-content-link");
+        posts.forEach(post => {
+          const extraTags = allExtraTags[post.href] ?? [];
+          const tags = post.querySelector("div.post-card-tags");
+
+          if (!!tags && extraTags.length > 0) {
+            extraTags.forEach(
+              extraTag => tags.insertAdjacentHTML("beforeend", `<span class="post-card-primary-tag">${extraTag}</span>`)
+            );
+          }
+        });
+      }
+    });
+</script>
+<figure class="my-avatar flex items-center">
+  <a class="my-avatar-link" href="https://blog.ferrata.dev">
+    <img class="my-avatar-image object-cover rounded-full z-0" src="https://ferrata.dev/static/img/avatar.jpg" />
+  </a>
+</figure>

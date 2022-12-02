@@ -4,7 +4,22 @@
   <link rel="alternate" type="text/html" href="https://world.hey.com/ferrata"/>
   <link rel="self" type="application/atom+xml" href="https://world.hey.com/ferrata/feed.atom"/>
   <title>Sasha Goloshchapov</title>
-  <updated>2022-11-28T15:59:26Z</updated>
+  <updated>2022-12-02T05:48:57Z</updated>
+  <entry>
+    <id>tag:world.hey.com,2005:World::Post/24533</id>
+    <published>2022-12-02T05:48:57Z</published>
+    <updated>2022-12-02T05:48:57Z</updated>
+    <link rel="alternate" type="text/html" href="https://world.hey.com/ferrata/my-blog-is-moving-to-blog-ferrata-dev-98c3f300"/>
+    <title>My blog is moving to blog.ferrata.dev</title>
+    <content type="html">&lt;div class="trix-content"&gt;
+  &lt;div&gt;And I am very excited about it 😁&lt;br&gt;&lt;br&gt;The moving is mainly done except for some minor detail. Check this out: &lt;a href="https://blog.ferrata.dev"&gt;https://blog.ferrata.dev&lt;/a&gt;&lt;br&gt;&lt;br&gt;It was relatively easy, but at the same time, it was strange. Some things I thought would be painful, in fact, automagically worked. And some things, I had to get creative to get it working.&lt;br&gt;&lt;br&gt;Expect a blog post about it 😎&lt;br&gt;&lt;br&gt;Stay tuned!&lt;/div&gt;
+&lt;/div&gt;
+</content>
+    <author>
+      <name>Sasha Goloshchapov</name>
+      <email>ferrata@hey.com</email>
+    </author>
+  </entry>
   <entry>
     <id>tag:world.hey.com,2005:World::Post/24451</id>
     <published>2022-11-28T15:59:26Z</published>

@@ -2,8 +2,8 @@
 name: Deploy production code
 
 on:
-  schedule:
-    - cron: '20 0 * * *'
+  # schedule:
+  #   - cron: '20 0 * * *'
 
   # Runs on pushes targeting the default branch
   push:
@@ -27,51 +27,51 @@ env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
-  sync:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-    steps:
-      - name: Initialize
-        run: |
-          echo SYNC_BRANCH_NAME="feature/chore_automated_sync_rss_$(date +%s)" >> $GITHUB_ENV
-          echo SYNC_PR_TITLE="chore(automated): syncing RSS" >> $GITHUB_ENV
+  # sync:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+  #   steps:
+  #     - name: Initialize
+  #       run: |
+  #         echo SYNC_BRANCH_NAME="feature/chore_automated_sync_rss_$(date +%s)" >> $GITHUB_ENV
+  #         echo SYNC_PR_TITLE="chore(automated): syncing RSS" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v3
+  #     - uses: actions/checkout@v3
 
-      - run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
+  #     - run: |
+  #         git config user.name "GitHub Actions Bot"
+  #         git config user.email "<>"
 
-          git branch $SYNC_BRANCH_NAME
-          git switch $SYNC_BRANCH_NAME
+  #         git branch $SYNC_BRANCH_NAME
+  #         git switch $SYNC_BRANCH_NAME
 
-          curl https://world.hey.com/ferrata/feed.atom > ./public/feed.atom
+  #         curl https://world.hey.com/ferrata/feed.atom > ./public/feed.atom
 
-      - name: Check if anything changed
-        id: check
+  #     - name: Check if anything changed
+  #       id: check
         
-        # https://stackoverflow.com/a/74325815/8607180
-        # https://stackoverflow.com/a/857696/8607180
-        # https://www.iamdeveloper.com/blog/automate-and-merge-pull-requests-using-github-actions-and-the-github-cli-4lo6/
-        run: |
-          git add .
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          fi
+  #       # https://stackoverflow.com/a/74325815/8607180
+  #       # https://stackoverflow.com/a/857696/8607180
+  #       # https://www.iamdeveloper.com/blog/automate-and-merge-pull-requests-using-github-actions-and-the-github-cli-4lo6/
+  #       run: |
+  #         git add .
+  #         if [[ -n "$(git status --porcelain)" ]]; then
+  #           echo "changed=true" >> $GITHUB_OUTPUT
+  #         fi
         
-      - name: Commit files
-        if: steps.check.outputs.changed == 'true'
-        run: |
-          echo "Creating PR \"$SYNC_PR_TITLE\" for branch $SYNC_BRANCH_NAME"
-          git commit -m "$SYNC_PR_TITLE"
-          git push origin $SYNC_BRANCH_NAME
-          gh pr create --title "$SYNC_PR_TITLE" --body "This is an automated PR to synchronize external files"
-          gh pr merge --auto --delete-branch --squash "$SYNC_BRANCH_NAME"
+  #     - name: Commit files
+  #       if: steps.check.outputs.changed == 'true'
+  #       run: |
+  #         echo "Creating PR \"$SYNC_PR_TITLE\" for branch $SYNC_BRANCH_NAME"
+  #         git commit -m "$SYNC_PR_TITLE"
+  #         git push origin $SYNC_BRANCH_NAME
+  #         gh pr create --title "$SYNC_PR_TITLE" --body "This is an automated PR to synchronize external files"
+  #         gh pr merge --auto --delete-branch --squash "$SYNC_BRANCH_NAME"
 
   # Single deploy job since we're just deploying
   deploy:
-    needs: sync
+    # needs: sync
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

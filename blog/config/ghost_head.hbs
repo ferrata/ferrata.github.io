@@ -177,17 +177,54 @@
     background: 0xff0000 !important;
   }
 
+  .language-css .token.string,
+  .style .token.string,
+  .token.entity,
+  .token.operator,
+  .token.url {
+    background: initial;
+  }
+
   html.dark-mode {
     --color-darkmode: rgb(235 232 229);
     --color-secondary-text: rgb(235 232 229);
   }
 
-  html.dark-mode :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content) {
-    color: var(--color-light-grey);
+  html.dark-mode ::selection {
+    background: var(--ghost-accent-color);
   }
 
-  html.dark-mode :is(.language-css .token.string, .style .token.string, .token.entity, .token.operator, .token.url) {
-    background: initial;
+  html.dark-mode .gh-head-logo {
+    color: var(--color-secondary-text);
+  }
+
+  html.dark-mode .theme-switch {
+    color: var(--color-secondary-text);
+  }
+
+  html.dark-mode .post-card-featured,
+  html.dark-mode .post-card-title {
+    color: var(--color-secondary-text);
+  }
+
+  html.dark-mode .article-title,
+  html.dark-mode .author-profile-location,
+  html.dark-mode .author-profile-social-link:hover {
+    color: var(--color-secondary-text);
+  }
+
+  html.dark-mode .footer-cta-title,
+  html.dark-mode .kg-header-card h2.kg-header-card-header,
+  html.dark-mode .kg-header-card h3.kg-header-card-subheader {
+    color: var(--color-secondary-text);
+  }
+
+  html.dark-mode :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content) {
+    color: var(--color-light-grey) !important;
+  }
+
+  html.dark-mode .footer-cta-button {
+    color: #000;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -243,16 +280,9 @@
       color: var(--color-light-grey) !important;
     }
 
-    .footer-cta-button {
-      --color-secondary-text: #000;
-    }
-
-    .language-css .token.string,
-    .style .token.string,
-    .token.entity,
-    .token.operator,
-    .token.url {
-      background: initial;
+    html.dark-mode .footer-cta-button,
+    html.auto-color .footer-cta-button {
+      color: #000;
     }
   }
 </style>

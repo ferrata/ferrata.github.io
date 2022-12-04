@@ -186,6 +186,10 @@
     color: var(--color-light-grey);
   }
 
+  html.dark-mode :is(.language-css .token.string, .style .token.string, .token.entity, .token.operator, .token.url) {
+    background: initial;
+  }
+
   @media (prefers-color-scheme: dark) {
 
     html.dark-mode,
@@ -316,8 +320,7 @@
       .querySelector(".gh-head-actions button.gh-search")
       .insertAdjacentHTML("beforebegin", `<div class="theme-switch"><i></i></div>`);
 
-    const theme = getTheme();
-    setThemeIcon(theme);
+    setThemeIcon(getTheme());
 
     document.querySelectorAll("div.theme-switch").forEach(control => {
       control.addEventListener("click", e => {
@@ -326,7 +329,7 @@
     });
   });
 
-  // loading extra tags
+  // load extra tags
   fetch("https://blog.ferrata.dev/rss")
     .then(response => response.text())
     .then(str => new window.DOMParser().parseFromString(str, "text/xml"))

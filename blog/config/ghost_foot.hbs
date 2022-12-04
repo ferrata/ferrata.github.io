@@ -1,0 +1,12 @@
+<script>
+  const addRssFeedLink = () => {
+    document
+      .body
+      .querySelector("footer.site-footer .inner")
+      .insertAdjacentHTML("afterbegin", `
+        <div class="rss-feed">
+          <a href="https://blog.ferrata.dev/rss/"><i class="fa-solid fa-square-rss"></i></a>
+        </div>`);
+  }
+  addRssFeedLink();
+</script>

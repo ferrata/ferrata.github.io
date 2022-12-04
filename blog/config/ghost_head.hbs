@@ -108,6 +108,7 @@
   }
 
   .site-footer .inner {
+    grid-gap: initial;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -119,6 +120,11 @@
 
   .site-footer .inner .site-footer-nav {
     display: none;
+  }
+
+  .site-footer .rss-feed {
+    font-size: 2em;
+    margin-bottom: 0.5em;
   }
 
   code[class*=language-],
@@ -169,7 +175,8 @@
     }
 
     .site-footer .inner {
-      flex-direction: row;
+      align-items: flex-start;
+      max-width: initial;
     }
   }
 

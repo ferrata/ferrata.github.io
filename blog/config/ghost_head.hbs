@@ -81,6 +81,15 @@
     font-weight: 700;
   }
 
+  .theme-switch {
+    cursor: pointer;
+  }
+
+  .gh-head-brand .theme-switch {
+    margin-right: 2em;
+    display: none;
+  }
+
   ul {
     list-style: disc;
   }
@@ -155,6 +164,10 @@
       height: 6rem;
     }
 
+    .gh-head-brand .theme-switch {
+      display: block;
+    }
+
     .site-footer .inner {
       flex-direction: row;
     }
@@ -164,38 +177,66 @@
     background: 0xff0000 !important;
   }
 
+  html.dark-mode {
+    --color-darkmode: rgb(235 232 229);
+    --color-secondary-text: rgb(235 232 229);
+  }
+
+  html.dark-mode :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content) {
+    color: var(--color-light-grey);
+  }
+
   @media (prefers-color-scheme: dark) {
-    * {
+
+    html.dark-mode,
+    html.auto-color {
+      --color-darkmode: rgb(235 232 229);
       --color-secondary-text: rgb(235 232 229);
     }
 
-    ::selection {
+    html.dark-mode ::selection,
+    html.auto-color ::selection {
       background: var(--ghost-accent-color);
     }
 
-    .gh-head-logo {
-      color: rgb(235 232 229);
+    html.dark-mode .gh-head-logo,
+    html.auto-color .gh-head-logo {
+      color: var(--color-secondary-text);
     }
 
+    html.dark-mode .theme-switch,
+    html.auto-color .theme-switch {
+      color: var(--color-secondary-text);
+    }
+
+    html.dark-mode .post-card-featured,
+    html.dark-mode .post-card-title,
     html.auto-color .post-card-featured,
     html.auto-color .post-card-title {
-      color: rgb(235 232 229);
+      color: var(--color-secondary-text);
     }
 
+    html.dark-mode .article-title,
+    html.dark-mode .author-profile-location,
+    html.dark-mode .author-profile-social-link:hover,
     html.auto-color .article-title,
     html.auto-color .author-profile-location,
     html.auto-color .author-profile-social-link:hover {
-      color: rgb(235 232 229);
+      color: var(--color-secondary-text);
     }
 
+    html.dark-mode .footer-cta-title,
+    html.dark-mode .kg-header-card h2.kg-header-card-header,
+    html.dark-mode .kg-header-card h3.kg-header-card-subheader,
     html.auto-color .footer-cta-title,
     html.auto-color .kg-header-card h2.kg-header-card-header,
     html.auto-color .kg-header-card h3.kg-header-card-subheader {
-      color: rgb(235 232 229);
+      color: var(--color-secondary-text);
     }
 
+    html.dark-mode :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content),
     html.auto-color :is(.post-card-tags, .post-card-meta, .article-tag a, .byline-meta-content) {
-      color: inherit;
+      color: var(--color-light-grey) !important;
     }
 
     .footer-cta-button {
@@ -211,7 +252,80 @@
     }
   }
 </style>
+<script>
+  const getTheme = () => {
+    return window.localStorage.getItem("theme") ?? "system";
+  };
+
+  const setTheme = (theme) => {
+    const html = document.querySelector("html");
+    html.classList.remove("auto-color");
+    html.classList.remove("dark-mode");
+
+    if (theme === "system") {
+      html.classList.add("auto-color");
+      window.localStorage.removeItem("theme");
+    } else {
+      if (theme === "dark") {
+        html.classList.add("dark-mode");
+      }
+
+      window.localStorage.setItem("theme", theme);
+    }
+  };
+
+  const setThemeIcon = (theme) => {
+    const icons = {
+      "system": "fa-solid fa-circle-half-stroke",
+      "dark": "fa-solid fa-moon",
+      "light": "fa-solid fa-sun"
+    };
+
+    document
+      .querySelectorAll("div.theme-switch i")
+      .forEach(control => {
+        control.className = icons[theme];
+      });
+  };
+
+  const setNextTheme = () => {
+    const themeOrder = {
+      "system": "dark",
+      "dark": "light",
+      "light": "system"
+    };
+
+    const next = themeOrder[getTheme()];
+    setTheme(next);
+    setThemeIcon(next);
+  };
+
+  const theme = getTheme();
+  setTheme(theme);
+</script>
 <script defer>
+  // inject a theme switch
+  window.addEventListener("load", () => {
+    document
+      .body
+      .querySelector(".gh-head-brand button.gh-search")
+      .insertAdjacentHTML("beforebegin", `<div class="theme-switch"><i></i></div>`);
+
+    document
+      .body
+      .querySelector(".gh-head-actions button.gh-search")
+      .insertAdjacentHTML("beforebegin", `<div class="theme-switch"><i></i></div>`);
+
+    const theme = getTheme();
+    setThemeIcon(theme);
+
+    document.querySelectorAll("div.theme-switch").forEach(control => {
+      control.addEventListener("click", e => {
+        setNextTheme();
+      });
+    });
+  });
+
   // loading extra tags
   fetch("https://blog.ferrata.dev/rss")
     .then(response => response.text())

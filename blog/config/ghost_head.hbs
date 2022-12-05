@@ -51,8 +51,13 @@
 
   .home-template .post-card-primary-tag::before,
   .post-template .post-card-primary-tag a::before,
-  .tag-template .post-card-primary-tag::before {
+  .tag-template span.post-card-primary-tag::before,
+  .tag-template .post-card.post-card-large .post-card-header h2::before {
     content: "#";
+  }
+
+  .tag-template .post-card.post-card-large .post-card-content-link {
+    text-align: center;
   }
 
   @keyframes fadeIn {

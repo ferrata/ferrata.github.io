@@ -88,6 +88,21 @@
 
   .theme-switch {
     cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .control-tooltip:hover::before {
+    content: attr(tooltip-text);
+    text-align: right;
+    width: max-content;
+    border: 1px solid;
+    border-radius: 1.5em;
+    padding: 0.3em 0.7em 0.3em;
+    position: absolute;
+    transform: translate(-30%, -2.3em);
+    animation: fadeIn 0.5s;
   }
 
   .gh-head-brand .theme-switch {
@@ -176,17 +191,15 @@
     }
 
     .gh-head-brand .theme-switch {
-      display: block;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .site-footer .inner {
       align-items: flex-start;
       max-width: initial;
     }
-  }
-
-  .gh-portal-triggerbtn-container:before {
-    background: 0xff0000 !important;
   }
 
   .language-css .token.string,
@@ -331,6 +344,7 @@
       .querySelectorAll("div.theme-switch i")
       .forEach(control => {
         control.className = icons[theme];
+        control.parentNode.setAttribute("tooltip-text", `${theme} theme`);
       });
   };
 
@@ -355,12 +369,12 @@
     document
       .body
       .querySelector(".gh-head-brand button.gh-search")
-      .insertAdjacentHTML("beforebegin", `<div class="theme-switch"><i></i></div>`);
+      .insertAdjacentHTML("beforebegin", `<div class="theme-switch control-tooltip"><i></i></div>`);
 
     document
       .body
       .querySelector(".gh-head-actions button.gh-search")
-      .insertAdjacentHTML("beforebegin", `<div class="theme-switch"><i></i></div>`);
+      .insertAdjacentHTML("beforebegin", `<div class="theme-switch control-tooltip"><i></i></div>`);
 
     setThemeIcon(getTheme());
 

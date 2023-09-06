@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import shasa from "../assets/shasa.png";
 
 type ShasaState = {
   x: number;
@@ -39,7 +40,7 @@ const SpaceScene = ({ zIndex = 0 }) => {
     resizeObserver.observe(context.canvas);
 
     const image = new Image();
-    image.src = "shasa.png";
+    image.src = shasa;
     image.onload = () => {
       setImage(image);
     };

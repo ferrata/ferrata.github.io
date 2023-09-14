@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import shasa from "../assets/shasa.png";
+import dumbbellNebula from "../assets/dumbbell-nebula.jpg";
+import godzillaNebula from "../assets/godzilla-nebula.jpg";
+import horseheadNebula from "../assets/horsehead-nebula.jpg";
+import planetaryNebula from "../assets/planetary-nebula.jpg";
+import swanNebula from "../assets/swan-nebula.jpg";
 
 type ShasaState = {
   x: number;
@@ -159,14 +164,25 @@ const SpaceScene = ({ zIndex = 0 }) => {
   );
 };
 
+const randomBackground = () => {
+  const backgrounds = [
+    dumbbellNebula,
+    godzillaNebula,
+    horseheadNebula,
+    planetaryNebula,
+    swanNebula,
+  ];
+  const randomIndex = Math.floor(Math.random() * backgrounds.length);
+  return backgrounds[randomIndex];
+};
+
 export const NotFound = () => {
   return (
     <div
       className="app"
       role="main"
       style={{
-        backgroundImage:
-          "url('https://source.unsplash.com/random/?nebulas,outerspace')",
+        backgroundImage: `url('${randomBackground()}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

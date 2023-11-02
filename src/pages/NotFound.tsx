@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import shasa from "../assets/shasa.png";
+import sasa from "../assets/sasa.png";
 import dumbbellNebula from "../assets/dumbbell-nebula.jpg";
 import godzillaNebula from "../assets/godzilla-nebula.jpg";
 import horseheadNebula from "../assets/horsehead-nebula.jpg";
 import planetaryNebula from "../assets/planetary-nebula.jpg";
 import swanNebula from "../assets/swan-nebula.jpg";
 
-type ShasaState = {
+type SasaState = {
   x: number;
   y: number;
   rotation: number;
@@ -16,7 +16,7 @@ type ShasaState = {
 const SpaceScene = ({ zIndex = 0 }) => {
   const [ref, setRef] = useState<HTMLCanvasElement | null>(null);
   const [image, setImage] = useState<HTMLImageElement>(new Image());
-  const [position, setPosition] = useState<ShasaState>({
+  const [position, setPosition] = useState<SasaState>({
     x: Math.random() * 100,
     y: Math.random() * 100,
     rotation: Math.random() * 360,
@@ -45,7 +45,7 @@ const SpaceScene = ({ zIndex = 0 }) => {
     resizeObserver.observe(context.canvas);
 
     const image = new Image();
-    image.src = shasa;
+    image.src = sasa;
     image.onload = () => {
       setImage(image);
     };

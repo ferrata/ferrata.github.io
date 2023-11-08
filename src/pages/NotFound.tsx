@@ -1,170 +1,17 @@
-import { useEffect, useState } from "react";
-import sasa from "../assets/sasa.png";
+import { Application, Container, Sprite, Texture } from "pixi.js";
+import { Stage, useApp } from "@pixi/react";
+import { CRTFilter, CRTFilterOptions } from "pixi-filters";
+import { useEffect } from "react";
+
 import dumbbellNebula from "../assets/dumbbell-nebula.jpg";
 import godzillaNebula from "../assets/godzilla-nebula.jpg";
 import horseheadNebula from "../assets/horsehead-nebula.jpg";
 import planetaryNebula from "../assets/planetary-nebula.jpg";
 import swanNebula from "../assets/swan-nebula.jpg";
+import sasa from "../assets/sasa.png";
+import sasaLogo from "../assets/sasa-logo.png";
 
-type SasaState = {
-  x: number;
-  y: number;
-  rotation: number;
-  beaconOn: boolean;
-};
-
-const SpaceScene = ({ zIndex = 0 }) => {
-  const [ref, setRef] = useState<HTMLCanvasElement | null>(null);
-  const [image, setImage] = useState<HTMLImageElement>(new Image());
-  const [position, setPosition] = useState<SasaState>({
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    rotation: Math.random() * 360,
-    beaconOn: false,
-  });
-
-  useEffect(() => {
-    const context = ref?.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    context.canvas.width = window.innerWidth;
-    context.canvas.height = window.innerHeight;
-
-    const resizeObserver = new ResizeObserver(() => {
-      context.canvas.width = Math.round(
-        context.canvas.clientWidth * devicePixelRatio
-      );
-      context.canvas.height = Math.round(
-        context.canvas.clientHeight * devicePixelRatio
-      );
-    });
-
-    resizeObserver.observe(context.canvas);
-
-    const image = new Image();
-    image.src = sasa;
-    image.onload = () => {
-      setImage(image);
-    };
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [ref]);
-
-  useEffect(() => {
-    const context = ref?.getContext("2d");
-
-    if (!context) {
-      return;
-    }
-
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.save();
-
-    context.translate(context.canvas.width / 2, context.canvas.height / 2);
-    context.scale(0.5, 0.5);
-    context.rotate((position.rotation * Math.PI) / 180);
-    context.drawImage(image, position.x, position.y);
-
-    if (position.beaconOn) {
-      const beaconCoordinates = {
-        x: position.x + 198,
-        y: position.y + 26,
-      };
-
-      context.beginPath();
-      context.arc(beaconCoordinates.x, beaconCoordinates.y, 15, 0, 2 * Math.PI);
-      context.fillStyle = "red";
-      context.fill();
-    }
-
-    context.restore();
-
-    const coordinates = [
-      { x: position.x, y: position.y },
-      { x: position.x + image.width, y: position.y },
-      { x: position.x, y: position.y + image.height },
-      { x: position.x + image.width, y: position.y + image.height },
-    ];
-
-    const isOutside = coordinates.every(
-      (coordinate) =>
-        (coordinate.x < 0 || coordinate.x > context.canvas.width) &&
-        (coordinate.y < 0 || coordinate.y > context.canvas.height)
-    );
-
-    if (isOutside) {
-      if (position.x > context.canvas.width) {
-        setPosition((prev) => ({
-          ...prev,
-          x: -context.canvas.width - image.width,
-        }));
-      } else if (position.x < -context.canvas.width - image.width) {
-        setPosition((prev) => ({
-          ...prev,
-          x: context.canvas.width,
-        }));
-      } else if (position.y > context.canvas.height) {
-        setPosition((prev) => ({
-          ...prev,
-          y: -context.canvas.height - image.height,
-        }));
-      } else if (position.y < -context.canvas.height - image.height) {
-        setPosition((prev) => ({
-          ...prev,
-          y: context.canvas.height,
-        }));
-      }
-    }
-  }, [position]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => ({
-        ...prev,
-        x: prev.x + 1,
-        y: prev.y - 1,
-        rotation: prev.rotation - 0.05,
-      }));
-    }, 50);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [ref]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPosition((prev) => ({
-        ...prev,
-        beaconOn: !prev.beaconOn,
-      }));
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [ref]);
-
-  return (
-    <canvas
-      className="space-scene absolute top-0 left-0"
-      style={{
-        zIndex: zIndex,
-        filter: "brightness(0.7)",
-        width: "100%",
-        height: "100%",
-      }}
-      ref={setRef}
-    />
-  );
-};
-
-const randomBackground = () => {
+function randomBackground() {
   const backgrounds = [
     dumbbellNebula,
     godzillaNebula,
@@ -172,9 +19,123 @@ const randomBackground = () => {
     planetaryNebula,
     swanNebula,
   ];
-  const randomIndex = Math.floor(Math.random() * backgrounds.length);
-  return backgrounds[randomIndex];
+
+  const index = Math.floor(Math.random() * backgrounds.length);
+
+  return backgrounds[index];
+}
+
+type Interference = {
+  value: number;
+  time: number;
 };
+
+class CRTFilterWithInterference extends CRTFilter {
+  interference: Interference = this.randomInterference();
+
+  constructor(options?: Partial<CRTFilterOptions>) {
+    super(options);
+
+    this.vignetting = 0;
+  }
+
+  public tick(deltaTime: number) {
+    this.time += 0.01 * deltaTime;
+    this.noise = Math.random() * 0.2;
+    this.seed = Math.random();
+
+    this.enabled = this.interference.value > 0;
+    this.lineWidth = this.interference.value;
+
+    if (this.interference.time > 0) {
+      this.interference.time -= 0.1 * deltaTime;
+    }
+
+    if (this.interference.time <= 0) {
+      this.interference = {
+        ...this.randomInterference(),
+      };
+    }
+  }
+
+  randomInterference(): Interference {
+    return {
+      value: Math.random() > 0.2 ? Math.random() * 30 : 0,
+      time: Math.max(Math.random() * 10, 2),
+    };
+  }
+}
+
+function run(app: Application, filter: CRTFilterWithInterference) {
+  const background = new Sprite(Texture.from(randomBackground()));
+  app.stage.addChild(background);
+
+  background.scale.set(0.7);
+  background.anchor.set(0.5);
+  background.x = app.screen.width / 2;
+  background.y = app.screen.height / 2;
+
+  const sasaContainer = new Container();
+  app.stage.addChild(sasaContainer);
+
+  const texture = Texture.from(sasa);
+  const sprite = new Sprite(texture);
+  sprite.anchor.set(0.5);
+  sasaContainer.addChild(sprite);
+
+  sasaContainer.x = -app.screen.width / 4;
+  sasaContainer.y = app.screen.height / 2;
+
+  app.ticker.add((delta) => {
+    sasaContainer.rotation -= 0.01 * delta;
+    sasaContainer.position.x += 1 * delta;
+
+    if (sasaContainer.position.x > app.screen.width + sasaContainer.width) {
+      sasaContainer.position.x = -sasaContainer.width;
+    }
+
+    filter.tick(delta);
+  });
+}
+
+function resize() {
+  const canvas = document.querySelector("canvas");
+  if (!canvas) {
+    return;
+  }
+
+  canvas.style.width = `${window.innerWidth - 1}px`;
+  canvas.style.height = `${window.innerHeight - 1}px`;
+}
+
+function PixiApp() {
+  let app = useApp();
+
+  useEffect(() => {
+    const filter = new CRTFilterWithInterference();
+    app.stage.filters = [filter];
+
+    app.stage.removeChildren();
+
+    try {
+      run(app, filter);
+    } catch (err) {
+      console.error(err);
+    }
+
+    app.resizeTo = window;
+  }, [app]);
+
+  useEffect(() => {
+    resize();
+    window.addEventListener("resize", resize);
+    return () => {
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return <></>;
+}
 
 export const NotFound = () => {
   return (
@@ -182,30 +143,44 @@ export const NotFound = () => {
       className="app"
       role="main"
       style={{
-        backgroundImage: `url('${randomBackground()}')`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
+        overflow: "hidden",
+        backgroundColor: "black",
       }}
     >
+      <Stage width={window.innerWidth} height={window.innerHeight}>
+        <PixiApp />
+      </Stage>
       <header
-        className="app-header"
+        className="app-header absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center"
         style={{
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backgroundColor: "rgba(0, 0, 0, 0)",
+          color: "#171717",
         }}
       >
-        <SpaceScene {...{ zIndex: 0 }} />
-        <code className="text-5xl" style={{ zIndex: 1 }}>
+        <img
+          src={sasaLogo}
+          alt="SASA Logo"
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            width: "120px",
+            height: "auto",
+            opacity: 0.7,
+          }}
+        />
+        <code className="text-5xl bg-white bg-opacity-40 backdrop-blur-[10px] rounded-lg">
           404 Not Found
         </code>
         <br />
-        <p className="w-6/12" style={{ zIndex: 1 }}>
+
+        <div className="max-w-md bg-white bg-opacity-40 backdrop-blur-[10px] p-6 rounded-lg">
           it seems like you are looking for the{" "}
           <code>{window.location.pathname}</code> page, but it is not there...
           <br />
           <br />
           maybe Sasha broke something 🤔
-        </p>
+        </div>
       </header>
     </div>
   );

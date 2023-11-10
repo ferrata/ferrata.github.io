@@ -47,11 +47,15 @@
     "webpack-merge": "^5.9.0"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.4.2",
+    "@fortawesome/free-solid-svg-icons": "^6.4.2",
+    "@fortawesome/react-fontawesome": "^0.2.0",
     "@pixi/react": "^7.1.1",
     "pixi-filters": "^5.2.1",
     "pixi.js": "^7.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.15.0"
+    "react-router-dom": "^6.15.0",
+    "tone": "^14.7.77"
   }
 }

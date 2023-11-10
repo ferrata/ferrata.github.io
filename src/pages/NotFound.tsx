@@ -68,7 +68,7 @@ function resize() {
 function randomInterference(): Interference {
   return {
     value: Math.random() > 0.2 ? Math.random() * 30 : 0,
-    timeMilliseconds: Math.max(Math.random() * 1000, 100),
+    timeMilliseconds: Math.max(Math.random() * 5000, 200),
   };
 }
 
@@ -79,7 +79,7 @@ function useInterference() {
   const prevTimeMilliseconds = useRef<number>(0);
 
   useEffect(() => {
-    const tick = 1;
+    const tick = 100;
 
     const interval = setInterval(() => {
       if (prevTimeMilliseconds.current <= 0) {

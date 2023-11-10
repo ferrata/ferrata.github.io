@@ -56,6 +56,10 @@ export default function useNoise() {
 
   useEffect(() => {
     if (soundOn) {
+      Tone.start().catch((err) => {
+        console.log(err);
+      });
+
       Tone.Destination.mute = false;
     } else {
       Tone.Destination.mute = true;

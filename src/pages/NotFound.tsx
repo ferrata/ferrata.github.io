@@ -192,8 +192,6 @@ export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
   const [callForHelp] = useSound(houston);
 
-  // return <button onClick={play}>Boop!</button>;  }
-
   return (
     <div
       className="app"

@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faVolumeHigh, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTowerBroadcast,
+  faVolumeHigh,
+  faVolumeXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { Container, Sprite, Texture } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
 import { CRTFilter, CRTFilterOptions } from "pixi-filters";
+import useSound from "use-sound";
+
+import useNoise from "../hooks/useNoise";
 
 import dumbbellNebula from "../assets/dumbbell-nebula.jpg";
 import godzillaNebula from "../assets/godzilla-nebula.jpg";
@@ -12,7 +19,7 @@ import planetaryNebula from "../assets/planetary-nebula.jpg";
 import swanNebula from "../assets/swan-nebula.jpg";
 import sasa from "../assets/sasa.png";
 import sasaLogo from "../assets/sasa-logo.png";
-import useNoise from "../hooks/useNoise";
+import houston from "../assets/houston.ogg";
 
 function randomBackground() {
   const backgrounds = [
@@ -183,6 +190,9 @@ function PixiScene() {
 
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
+  const [callForHelp] = useSound(houston);
+
+  // return <button onClick={play}>Boop!</button>;  }
 
   return (
     <div
@@ -247,6 +257,23 @@ export const NotFound = () => {
             <div id="sound-unmuted" className={soundOn ? "" : "hidden"}>
               <FontAwesomeIcon icon={faVolumeHigh} />
             </div>
+          </button>
+        </div>
+
+        <div
+          className="bg-white bg-opacity-40 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: 20,
+            color: soundOn ? "#ffffff" : "#171717",
+          }}
+        >
+          <button
+            className="cursor-pointer text-2xl"
+            onClick={() => soundOn && callForHelp()}
+          >
+            <FontAwesomeIcon icon={faTowerBroadcast} />
           </button>
         </div>
       </header>

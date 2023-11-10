@@ -7,3 +7,8 @@ declare module "*.jpg" {
   const value: any;
   export default value;
 }
+
+declare module "*.ogg" {
+  const value: any;
+  export default value;
+}

@@ -237,7 +237,7 @@ export const NotFound = () => {
         </div>
 
         <div
-          className="bg-white bg-opacity-40 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+          className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
           style={{
             position: "absolute",
             bottom: 20,
@@ -248,6 +248,7 @@ export const NotFound = () => {
           <button
             className="cursor-pointer text-2xl"
             onClick={() => setSoundOn(!soundOn)}
+            title="Toggle sound"
           >
             <div id="sound-muted" className={soundOn ? "hidden" : ""}>
               <FontAwesomeIcon icon={faVolumeXmark} />
@@ -259,7 +260,7 @@ export const NotFound = () => {
         </div>
 
         <div
-          className="bg-white bg-opacity-40 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+          className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
           style={{
             position: "absolute",
             bottom: 100,
@@ -270,6 +271,7 @@ export const NotFound = () => {
           <button
             className="cursor-pointer text-2xl"
             onClick={() => soundOn && callForHelp()}
+            title="S.O.S."
           >
             <FontAwesomeIcon icon={faTowerBroadcast} />
           </button>

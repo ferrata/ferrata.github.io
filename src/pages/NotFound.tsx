@@ -264,8 +264,8 @@ export const NotFound = () => {
           className="bg-white bg-opacity-40 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
           style={{
             position: "absolute",
-            bottom: 20,
-            left: 20,
+            bottom: 100,
+            right: 20,
             color: soundOn ? "#ffffff" : "#171717",
           }}
         >

@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faArrowDown,
+  faArrowLeft,
+  faArrowRight,
+  faArrowUp,
+  faRotateLeft,
+  faRotateRight,
   faTowerBroadcast,
   faVolumeHigh,
   faVolumeXmark,
+  faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
-import { Container, Sprite, Texture } from "pixi.js";
+import { Container, Graphics, Sprite, Texture } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
 import { CRTFilter, CRTFilterOptions } from "pixi-filters";
 import useSound from "use-sound";
@@ -99,11 +106,43 @@ function useInterference() {
   return interference;
 }
 
-function PixiScene() {
+type Velocity = {
+  x: number;
+  y: number;
+  angular: number;
+};
+
+function useSasa() {
+  const [velocity, setVelocity] = useState<Velocity>({
+    x: 1,
+    y: 0,
+    angular: 0.01,
+  });
+
+  const [transmitting, setTransmitting] = useState<boolean>(false);
+  return [transmitting, setTransmitting, velocity, setVelocity] as const;
+}
+
+type PixiSceneProps = {
+  transmitting: boolean;
+  velocity: Velocity;
+};
+
+const zeroVelocity: Velocity = {
+  x: 0,
+  y: 0,
+  angular: 0,
+};
+
+function PixiScene({ transmitting, velocity }: PixiSceneProps) {
   const app = useApp();
   const [filter, _] = useState<CRTFilterWithInterference>(
     new CRTFilterWithInterference()
   );
+  const sasaGraphics = useRef<Graphics>();
+  const sasaContainer = useRef<Container>();
+  const sasaVelocity = useRef<Velocity>(zeroVelocity);
+  const tickerDelta = useRef<number>(0);
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
 
@@ -120,26 +159,42 @@ function PixiScene() {
     background.x = app.screen.width / 2;
     background.y = app.screen.height / 2;
 
-    const sasaContainer = new Container();
-    app.stage.addChild(sasaContainer);
+    const container = (sasaContainer.current = new Container());
+    app.stage.addChild(container);
 
-    const texture = Texture.from(sasa);
-    const sprite = new Sprite(texture);
+    const sprite = new Sprite(Texture.from(sasa));
     sprite.anchor.set(0.5);
-    sasaContainer.addChild(sprite);
+    container.addChild(sprite);
 
-    sasaContainer.x = -app.screen.width / 4;
-    sasaContainer.y = app.screen.height / 2;
+    container.addChild((sasaGraphics.current = new Graphics()));
+
+    container.x = -app.screen.width / 4;
+    container.y = app.screen.height / 2;
 
     app.ticker.add((delta) => {
+      tickerDelta.current = delta;
+
       background.x = app.screen.width / 2;
       background.y = app.screen.height / 2;
 
-      sasaContainer.rotation -= 0.01 * delta;
-      sasaContainer.position.x += 1 * delta;
+      container.rotation += sasaVelocity.current.angular * delta;
+      container.position.x += sasaVelocity.current.x * delta;
+      container.position.y += sasaVelocity.current.y * delta;
 
-      if (sasaContainer.position.x > app.screen.width + sasaContainer.width) {
-        sasaContainer.position.x = -sasaContainer.width;
+      if (container.position.x > app.screen.width + container.width) {
+        container.position.x = -container.width;
+      }
+
+      if (container.position.x < -container.width) {
+        container.position.x = app.screen.width + container.width;
+      }
+
+      if (container.position.y > app.screen.height + container.height) {
+        container.position.y = -container.height;
+      }
+
+      if (container.position.y < -container.height) {
+        container.position.y = app.screen.height + container.height;
       }
 
       filter.tick(delta);
@@ -178,6 +233,37 @@ function PixiScene() {
   }, [soundOn, interference]);
 
   useEffect(() => {
+    const sasa = sasaGraphics?.current;
+
+    if (sasa === undefined) {
+      return;
+    }
+
+    sasa?.clear();
+
+    if (transmitting) {
+      sasa.beginFill(0xff0000, 0.8);
+      sasa.drawCircle(-85, -275, 8);
+      sasa.endFill();
+    }
+  }, [app, transmitting]);
+
+  useEffect(() => {
+    const sasa = sasaContainer?.current;
+    const delta = tickerDelta?.current;
+
+    if (sasa === undefined || delta === undefined) {
+      return;
+    }
+
+    sasa.rotation += velocity.angular;
+    sasa.position.x += velocity.x;
+    sasa.position.y += velocity.y;
+
+    sasaVelocity.current = velocity;
+  }, [app, velocity, tickerDelta]);
+
+  useEffect(() => {
     resize();
     window.addEventListener("resize", resize);
     return () => {
@@ -190,7 +276,52 @@ function PixiScene() {
 
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
+  const [messageVisible, setMessageVisible] = useState<boolean>(true);
   const [callForHelp] = useSound(houston);
+  const [transmitting, setTransmitting, velocity, setVelocity] = useSasa();
+
+  function transmit(fn: () => void) {
+    setTransmitting(true);
+    fn();
+    setTimeout(() => {
+      setTransmitting(false);
+    }, 1000);
+  }
+
+  function sendSOS() {
+    transmit(() => {
+      if (soundOn) {
+        callForHelp();
+      }
+    });
+  }
+
+  function changeVelocityX(value: number) {
+    transmit(() => {
+      setVelocity((prev) => ({
+        ...prev,
+        x: prev.x + value,
+      }));
+    });
+  }
+
+  function changeVelocityY(value: number) {
+    transmit(() => {
+      setVelocity((prev) => ({
+        ...prev,
+        y: prev.y + value,
+      }));
+    });
+  }
+
+  function changeVelocityAngular(value: number) {
+    transmit(() => {
+      setVelocity((prev) => ({
+        ...prev,
+        angular: prev.angular + value,
+      }));
+    });
+  }
 
   return (
     <div
@@ -202,7 +333,7 @@ export const NotFound = () => {
       }}
     >
       <Stage width={window.innerWidth} height={window.innerHeight}>
-        <PixiScene />
+        <PixiScene transmitting={transmitting} velocity={velocity} />
       </Stage>
       <header
         className="app-header absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center"
@@ -223,58 +354,127 @@ export const NotFound = () => {
             opacity: 0.7,
           }}
         />
-        <code className="text-5xl bg-white bg-opacity-40 backdrop-blur-[10px] rounded-lg">
-          404 Not Found
-        </code>
-        <br />
 
-        <div className="max-w-md bg-white bg-opacity-40 backdrop-blur-[10px] p-6 rounded-lg">
-          it seems like you are looking for the{" "}
-          <code>{window.location.pathname}</code> page, but it is not there...
-          <br />
-          <br />
-          maybe Sasha broke something 🤔
-        </div>
+        {messageVisible && (
+          <>
+            <code className="text-5xl bg-white bg-opacity-40 backdrop-blur-[10px] rounded-lg">
+              404 Not Found
+            </code>
+            <br />
+
+            <div className="max-w-md bg-white bg-opacity-40 backdrop-blur-[10px] p-6 rounded-lg">
+              it seems like you are looking for the{" "}
+              <code>{window.location.pathname}</code> page, but it is not
+              there...
+              <br />
+              <br />
+              maybe Sasha broke something 🤔
+            </div>
+          </>
+        )}
 
         <div
-          className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
-          style={{
-            position: "absolute",
-            bottom: 20,
-            right: 20,
-            color: soundOn ? "#ffffff" : "#171717",
-          }}
+          className="flex flex-col space-y-3 justify-center items-center absolute right-3 bottom-3"
+          style={{ color: soundOn ? "#ffffff" : "#171717" }}
         >
-          <button
-            className="cursor-pointer text-2xl"
-            onClick={() => setSoundOn(!soundOn)}
-            title="Toggle sound"
+          <div
+            className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+            style={{ color: messageVisible ? "#ffffff" : "#171717" }}
           >
-            <div id="sound-muted" className={soundOn ? "hidden" : ""}>
-              <FontAwesomeIcon icon={faVolumeXmark} />
-            </div>
-            <div id="sound-unmuted" className={soundOn ? "" : "hidden"}>
-              <FontAwesomeIcon icon={faVolumeHigh} />
-            </div>
-          </button>
+            <button
+              className="cursor-pointer text-2xl"
+              onClick={() => setMessageVisible(!messageVisible)}
+              title="Toggle message"
+            >
+              <FontAwesomeIcon icon={faWindowRestore} />
+            </button>
+          </div>
+
+          <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+            <button
+              className="cursor-pointer text-2xl"
+              onClick={() => sendSOS()}
+              title="S.O.S."
+            >
+              <FontAwesomeIcon icon={faTowerBroadcast} />
+            </button>
+          </div>
+
+          <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+            <button
+              className="cursor-pointer text-2xl"
+              onClick={() => setSoundOn(!soundOn)}
+              title="Toggle sound"
+            >
+              <div id="sound-muted" className={soundOn ? "hidden" : ""}>
+                <FontAwesomeIcon icon={faVolumeXmark} />
+              </div>
+              <div id="sound-unmuted" className={soundOn ? "" : "hidden"}>
+                <FontAwesomeIcon icon={faVolumeHigh} />
+              </div>
+            </button>
+          </div>
         </div>
 
-        <div
-          className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
-          style={{
-            position: "absolute",
-            bottom: 100,
-            right: 20,
-            color: soundOn ? "#ffffff" : "#171717",
-          }}
-        >
-          <button
-            className="cursor-pointer text-2xl"
-            onClick={() => soundOn && callForHelp()}
-            title="S.O.S."
-          >
-            <FontAwesomeIcon icon={faTowerBroadcast} />
-          </button>
+        <div className="flex flex-col space-y-3 justify-center items-center absolute left-3 bottom-3 text-white">
+          <div className="flex flex-row space-x-3 justify-center items-center">
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityAngular(-0.01)}
+                title="Change angular velocity by -0.01"
+              >
+                <FontAwesomeIcon icon={faRotateLeft} />
+              </button>
+            </div>
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityY(-1)}
+                title="Change Y velocity by -1"
+              >
+                <FontAwesomeIcon icon={faArrowUp} />
+              </button>
+            </div>
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityAngular(0.01)}
+                title="Change angular velocity by 0.01"
+              >
+                <FontAwesomeIcon icon={faRotateRight} />
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-row space-x-3 justify-center items-center">
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityX(-1)}
+                title="Change X velocity by -1"
+              >
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
+            </div>
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityY(1)}
+                title="Change Y velocity by 1"
+              >
+                <FontAwesomeIcon icon={faArrowDown} />
+              </button>
+            </div>
+            <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <button
+                className="cursor-pointer text-2xl"
+                onClick={() => changeVelocityX(1)}
+                title="Change X velocity by 1"
+              >
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+            </div>
+          </div>
         </div>
       </header>
     </div>

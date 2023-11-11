@@ -23,7 +23,7 @@ export default function useNoise() {
   useEffect(() => {
     const noise = new Tone.Noise({
       type: options.type,
-      volume: -60,
+      volume: -50,
     });
 
     filter.current = new Tone.AutoFilter({

@@ -142,7 +142,6 @@ function PixiScene({ transmitting, velocity }: PixiSceneProps) {
   const sasaGraphics = useRef<Graphics>();
   const sasaContainer = useRef<Container>();
   const sasaVelocity = useRef<Velocity>(zeroVelocity);
-  const tickerDelta = useRef<number>(0);
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
 
@@ -172,8 +171,6 @@ function PixiScene({ transmitting, velocity }: PixiSceneProps) {
     container.y = app.screen.height / 2;
 
     app.ticker.add((delta) => {
-      tickerDelta.current = delta;
-
       background.x = app.screen.width / 2;
       background.y = app.screen.height / 2;
 
@@ -250,9 +247,8 @@ function PixiScene({ transmitting, velocity }: PixiSceneProps) {
 
   useEffect(() => {
     const sasa = sasaContainer?.current;
-    const delta = tickerDelta?.current;
 
-    if (sasa === undefined || delta === undefined) {
+    if (sasa === undefined) {
       return;
     }
 
@@ -261,7 +257,7 @@ function PixiScene({ transmitting, velocity }: PixiSceneProps) {
     sasa.position.y += velocity.y;
 
     sasaVelocity.current = velocity;
-  }, [app, velocity, tickerDelta]);
+  }, [app, velocity]);
 
   useEffect(() => {
     resize();

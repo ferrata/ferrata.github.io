@@ -331,6 +331,7 @@ export const NotFound = () => {
       <Stage width={window.innerWidth} height={window.innerHeight}>
         <PixiScene transmitting={transmitting} velocity={velocity} />
       </Stage>
+
       <header
         className="app-header absolute top-0 left-0 w-full h-full flex flex-col justify-center items-center"
         style={{

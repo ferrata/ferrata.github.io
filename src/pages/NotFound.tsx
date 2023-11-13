@@ -244,14 +244,11 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
 
     container.addChild((sasaGraphics.current = new Graphics()));
 
-    if (background.current.entity === "Black Hole") {
-      container.scale.set(0.1);
-      container.x = app.screen.width / 4;
-      container.y = app.screen.height / 2;
-    } else {
-      container.x = -app.screen.width / 4;
-      container.y = app.screen.height / 2;
-    }
+    const isBlackHole = background.current.entity === "Black Hole";
+
+    container.scale.set(isBlackHole ? 0.01 : 1);
+    container.x = isBlackHole ? app.screen.width / 4 : -app.screen.width / 4;
+    container.y = app.screen.height / 2;
 
     const style = new TextStyle({
       fontFamily: "Monaco, monospace",
@@ -273,7 +270,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
     statsPad.current.text.position.set(10, 10);
     app.stage.addChild(statsPad.current.text);
 
-    let sasaAppeared = background.current.entity !== "Black Hole";
+    let sasaAppeared = !isBlackHole;
 
     app.ticker.add((delta) => {
       if (!sasaAppeared && container.scale.x < 1) {

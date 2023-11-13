@@ -525,10 +525,12 @@ export const NotFound = () => {
             </code>
             <br />
 
-            <div className="max-w-md bg-white bg-opacity-40 backdrop-blur-[10px] p-6 rounded-lg">
-              it seems like you are looking for the{" "}
-              <code>{window.location.pathname}</code> page, but it is not
-              there...
+            <div className="max-w-fit m-8 bg-white bg-opacity-40 backdrop-blur-[10px] p-6 rounded-lg">
+              it seems like you are looking
+              <br />
+              for the <code>{window.location.pathname}</code> page,
+              <br />
+              but it is not there...
               <br />
               <br />
               maybe Sasha broke something 🤔

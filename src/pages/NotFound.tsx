@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
@@ -481,6 +481,26 @@ export const NotFound = () => {
     });
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const bindings: { [key: string]: () => void } = {
+      ArrowUp: () => changeVelocityY(-velocityDeltas.y),
+      ArrowDown: () => changeVelocityY(velocityDeltas.y),
+      ArrowLeft: () => changeVelocityX(-velocityDeltas.x),
+      ArrowRight: () => changeVelocityX(velocityDeltas.x),
+      KeyA: () => changeVelocityAngular(-velocityDeltas.angular),
+      KeyD: () => changeVelocityAngular(velocityDeltas.angular),
+      KeyS: () => sendSOS(),
+      KeyM: () => toggleMode(),
+      KeyV: () => setSoundOn(!soundOn),
+    };
+
+    const fn = bindings[event.code];
+    if (fn !== undefined) {
+      event.preventDefault();
+      fn();
+    }
+  }
+
   return (
     <div
       className="app"
@@ -489,6 +509,8 @@ export const NotFound = () => {
         overflow: "hidden",
         backgroundColor: "black",
       }}
+      onKeyDown={(e) => handleKeyDown(e)}
+      tabIndex={0}
     >
       <Stage width={window.innerWidth} height={window.innerHeight}>
         <PixiScene
@@ -545,7 +567,7 @@ export const NotFound = () => {
           <button
             className="cursor-pointer text-2xl"
             onClick={() => toggleMode()}
-            title="Toggle message"
+            title="Toggle message (M)"
           >
             <div
               className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
@@ -558,7 +580,7 @@ export const NotFound = () => {
           <button
             className="cursor-pointer text-2xl"
             onClick={() => sendSOS()}
-            title="S.O.S."
+            title="Send S.O.S. (S)"
           >
             <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
               <FontAwesomeIcon icon={faTowerBroadcast} />
@@ -568,7 +590,7 @@ export const NotFound = () => {
           <button
             className="cursor-pointer text-2xl"
             onClick={() => setSoundOn(!soundOn)}
-            title="Toggle sound"
+            title="Toggle sound (V)"
           >
             <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
               <FontAwesomeIcon icon={soundOn ? faVolumeHigh : faVolumeXmark} />
@@ -581,7 +603,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityAngular(-velocityDeltas.angular)}
-              title={`Change angular velocity by -${velocityDeltas.angular}`}
+              title={`Change angular velocity by -${velocityDeltas.angular} (A)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faRotateLeft} />
@@ -590,7 +612,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityY(-velocityDeltas.y)}
-              title={`Change Y velocity by -${velocityDeltas.y}`}
+              title={`Change Y velocity by -${velocityDeltas.y} (Up)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowUp} />
@@ -599,7 +621,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityAngular(velocityDeltas.angular)}
-              title={`Change angular velocity by ${velocityDeltas.angular}`}
+              title={`Change angular velocity by ${velocityDeltas.angular} (D)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faRotateRight} />
@@ -610,7 +632,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityX(-velocityDeltas.x)}
-              title={`Change X velocity by -${velocityDeltas.x}`}
+              title={`Change X velocity by -${velocityDeltas.x} (Left)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowLeft} />
@@ -619,7 +641,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityY(velocityDeltas.y)}
-              title={`Change Y velocity by ${velocityDeltas.y}`}
+              title={`Change Y velocity by ${velocityDeltas.y} (Down)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowDown} />
@@ -628,7 +650,7 @@ export const NotFound = () => {
             <button
               className="cursor-pointer text-2xl"
               onClick={() => changeVelocityX(velocityDeltas.x)}
-              title={`Change X velocity by ${velocityDeltas.x}`}
+              title={`Change X velocity by ${velocityDeltas.x} (Right)`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowRight} />

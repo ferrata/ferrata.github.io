@@ -159,7 +159,7 @@ type Velocity = {
   angular: number;
 };
 
-const velociityDeltas = {
+const velocityDeltas = {
   x: 0.1,
   y: 0.1,
   angular: 0.001,
@@ -169,7 +169,7 @@ function useSasa() {
   const [velocity, setVelocity] = useState<Velocity>({
     x: 0.5,
     y: 0,
-    angular: velociityDeltas.angular,
+    angular: velocityDeltas.angular,
   });
 
   const [transmitting, setTransmitting] = useState<boolean>(false);
@@ -193,6 +193,20 @@ const zeroVelocity: Velocity = {
   y: 0,
   angular: 0,
 };
+
+function setCover(image: Sprite, container: { width: number; height: number }) {
+  const imageRatio = image.height / image.width;
+  const screenRatio = container.height / container.width;
+  if (screenRatio > imageRatio) {
+    image.height = container.height;
+    image.width = container.height / imageRatio;
+  } else {
+    image.width = container.width;
+    image.height = container.width * imageRatio;
+  }
+  image.x = container.width / 2;
+  image.y = container.height / 2;
+}
 
 function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   const app = useApp();
@@ -218,12 +232,8 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
     );
     app.stage.addChild(backgroundSprite);
 
-    const scale = app.screen.width < backgroundSprite.width ? 0.7 : 1;
-
-    backgroundSprite.scale.set(scale);
     backgroundSprite.anchor.set(0.5);
-    backgroundSprite.x = app.screen.width / 2;
-    backgroundSprite.y = app.screen.height / 2;
+    setCover(backgroundSprite, app.screen);
 
     const container = (sasaContainer.current = new Container());
     app.stage.addChild(container);
@@ -274,8 +284,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
         }
       }
 
-      backgroundSprite.x = app.screen.width / 2;
-      backgroundSprite.y = app.screen.height / 2;
+      setCover(backgroundSprite, app.screen);
 
       container.rotation += sasaVelocity.current.angular * delta;
       container.position.x += sasaVelocity.current.x * delta;
@@ -411,11 +420,11 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   return <></>;
 }
 
-type DysplayMode = "message" | "stats" | "none";
+type DisplayMode = "message" | "stats" | "none";
 
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
-  const [mode, setMode] = useState<DysplayMode>("message");
+  const [mode, setMode] = useState<DisplayMode>("message");
   const [callForHelp] = useSound(houston);
   const [transmitting, setTransmitting, velocity, setVelocity] = useSasa();
 
@@ -534,18 +543,18 @@ export const NotFound = () => {
           className="flex flex-col space-y-3 justify-center items-center absolute right-3 bottom-3"
           style={{ color: soundOn ? "#ffffff" : "#171717" }}
         >
-          <div
-            className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
-            style={{ color: mode !== "none" ? "#ffffff" : "#171717" }}
+          <button
+            className="cursor-pointer text-2xl"
+            onClick={() => toggleMode()}
+            title="Toggle message"
           >
-            <button
-              className="cursor-pointer text-2xl"
-              onClick={() => toggleMode()}
-              title="Toggle message"
+            <div
+              className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+              style={{ color: mode !== "none" ? "#ffffff" : "#171717" }}
             >
               <FontAwesomeIcon icon={faWindowRestore} />
-            </button>
-          </div>
+            </div>
+          </button>
 
           <button
             className="cursor-pointer text-2xl"
@@ -572,8 +581,8 @@ export const NotFound = () => {
           <div className="flex flex-row space-x-3 justify-center items-center">
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityAngular(-velociityDeltas.angular)}
-              title={`Change angular velocity by -${velociityDeltas.angular}`}
+              onClick={() => changeVelocityAngular(-velocityDeltas.angular)}
+              title={`Change angular velocity by -${velocityDeltas.angular}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faRotateLeft} />
@@ -581,8 +590,8 @@ export const NotFound = () => {
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityY(-velociityDeltas.y)}
-              title={`Change Y velocity by -${velociityDeltas.y}`}
+              onClick={() => changeVelocityY(-velocityDeltas.y)}
+              title={`Change Y velocity by -${velocityDeltas.y}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowUp} />
@@ -590,8 +599,8 @@ export const NotFound = () => {
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityAngular(velociityDeltas.angular)}
-              title={`Change angular velocity by ${velociityDeltas.angular}`}
+              onClick={() => changeVelocityAngular(velocityDeltas.angular)}
+              title={`Change angular velocity by ${velocityDeltas.angular}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faRotateRight} />
@@ -601,8 +610,8 @@ export const NotFound = () => {
           <div className="flex flex-row space-x-3 justify-center items-center">
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityX(-velociityDeltas.x)}
-              title={`Change X velocity by -${velociityDeltas.x}`}
+              onClick={() => changeVelocityX(-velocityDeltas.x)}
+              title={`Change X velocity by -${velocityDeltas.x}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowLeft} />
@@ -610,8 +619,8 @@ export const NotFound = () => {
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityY(velociityDeltas.y)}
-              title={`Change Y velocity by ${velociityDeltas.y}`}
+              onClick={() => changeVelocityY(velocityDeltas.y)}
+              title={`Change Y velocity by ${velocityDeltas.y}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowDown} />
@@ -619,8 +628,8 @@ export const NotFound = () => {
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityX(velociityDeltas.x)}
-              title={`Change X velocity by ${velociityDeltas.x}`}
+              onClick={() => changeVelocityX(velocityDeltas.x)}
+              title={`Change X velocity by ${velocityDeltas.x}`}
             >
               <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
                 <FontAwesomeIcon icon={faArrowRight} />

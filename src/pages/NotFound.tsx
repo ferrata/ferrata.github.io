@@ -20,6 +20,7 @@ import {
   Graphics,
   Sprite,
   Texture,
+  ITextStyle,
 } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
 import { CRTFilter, CRTFilterOptions } from "pixi-filters";
@@ -182,11 +183,73 @@ type PixiSceneProps = {
   showStats: boolean;
 };
 
-type StatsPad = {
-  frame: Graphics;
-  text: Text;
-  style: TextStyle;
-};
+class DisplayPad {
+  private borderWidth = 10;
+  private graphics: Graphics;
+  private text: Text;
+  private style: TextStyle;
+
+  public get width(): number {
+    return this.graphics.width;
+  }
+
+  public get height(): number {
+    return this.graphics.height;
+  }
+
+  constructor(
+    parent: Container,
+    styleOptions: Partial<ITextStyle> = {
+      fontFamily: "Monaco, monospace",
+      fontSize: window.innerWidth > 768 ? 16 : 12,
+      fill: "white",
+      stroke: "gray",
+      align: "left",
+    }
+  ) {
+    this.graphics = new Graphics();
+    parent.addChild(this.graphics);
+
+    this.style = new TextStyle(styleOptions);
+    this.text = new Text("", this.style);
+    parent.addChild(this.text);
+
+    this.setPosition(0, 0);
+  }
+
+  public setPosition(x: number, y: number): DisplayPad {
+    this.graphics.position.set(x, y);
+    this.text.position.set(x + this.borderWidth, y + this.borderWidth);
+
+    return this;
+  }
+
+  public clear(): DisplayPad {
+    this.graphics.clear();
+    this.text.text = "";
+
+    return this;
+  }
+
+  public setText(text: string): DisplayPad {
+    const logMetrics = TextMetrics.measureText(text, this.style);
+
+    this.graphics
+      .clear()
+      .beginFill(0x000000, 0.5)
+      .drawRect(
+        0,
+        0,
+        logMetrics.width + this.borderWidth * 2,
+        logMetrics.height + this.borderWidth * 2
+      )
+      .endFill();
+
+    this.text.text = text;
+
+    return this;
+  }
+}
 
 const zeroVelocity: Velocity = {
   x: 0,
@@ -217,7 +280,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   const sasaContainer = useRef<Container>();
   const sasaVelocity = useRef<Velocity>(zeroVelocity);
   const background = useRef<Background>(randomBackground());
-  const statsPad = useRef<StatsPad>();
+  const statsPad = useRef<DisplayPad>();
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
 
@@ -250,25 +313,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
     container.x = isBlackHole ? app.screen.width / 4 : -app.screen.width / 4;
     container.y = app.screen.height / 2;
 
-    const style = new TextStyle({
-      fontFamily: "Monaco, monospace",
-      fontSize: window.innerWidth > 768 ? 16 : 12,
-      fill: "white",
-      stroke: "gray",
-      align: "left",
-    });
-
-    statsPad.current = {
-      frame: new Graphics(),
-      text: new Text("", style),
-      style,
-    };
-
-    statsPad.current.frame.position.set(0, 0);
-    app.stage.addChild(statsPad.current.frame);
-
-    statsPad.current.text.position.set(10, 10);
-    app.stage.addChild(statsPad.current.text);
+    statsPad.current = new DisplayPad(app.stage);
 
     let sasaAppeared = !isBlackHole;
 
@@ -373,8 +418,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
       return;
     }
 
-    statsPad.current.frame.clear();
-    statsPad.current.text.text = "";
+    statsPad.current.clear();
 
     if (!showStats) {
       return;
@@ -382,28 +426,18 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
 
     const location = background.current;
 
-    if (showStats) {
-      const text = [
-        "location",
-        `  constellation: ${location.constellation}`,
-        `  closest entity: ${location.entity}`,
-        `  closest system: ${location.closestSystem}`,
-        "velocity",
-        `  x: ${velocity.x.toFixed(2)}`,
-        `  y: ${velocity.y.toFixed(2)}`,
-        `  ω: ${velocity.angular.toFixed(3)}`,
-      ].join("\n");
+    const statsText = [
+      "location",
+      `  constellation: ${location.constellation}`,
+      `  closest entity: ${location.entity}`,
+      `  closest system: ${location.closestSystem}`,
+      "velocity",
+      `  x: ${velocity.x.toFixed(2)}`,
+      `  y: ${velocity.y.toFixed(2)}`,
+      `  ω: ${velocity.angular.toFixed(3)}`,
+    ].join("\n");
 
-      const textMetrics = TextMetrics.measureText(text, statsPad.current.style);
-
-      statsPad.current.frame
-        .clear()
-        .beginFill(0x000000, 0.5)
-        .drawRect(0, 0, textMetrics.width + 20, textMetrics.height + 20)
-        .endFill();
-
-      statsPad.current.text.text = text;
-    }
+    statsPad.current.setText(statsText);
   }, [app, showStats, velocity]);
 
   useEffect(() => {
@@ -419,11 +453,23 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
 
 type DisplayMode = "message" | "stats" | "none";
 
+type ButtonCode =
+  | "ArrowUp"
+  | "ArrowDown"
+  | "ArrowLeft"
+  | "ArrowRight"
+  | "KeyS"
+  | "KeyM"
+  | "KeyV"
+  | "KeyA"
+  | "KeyD";
+
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
   const [mode, setMode] = useState<DisplayMode>("message");
   const [callForHelp] = useSound(houston);
   const [transmitting, setTransmitting, velocity, setVelocity] = useSasa();
+  const [buttonsDown, setButtonsDown] = useState<ButtonCode[]>([]);
 
   function toggleMode() {
     setMode((prev) => {
@@ -456,10 +502,12 @@ export const NotFound = () => {
 
   function changeVelocityX(value: number) {
     transmit(() => {
-      setVelocity((prev) => ({
-        ...prev,
-        x: prev.x + value,
-      }));
+      setVelocity((prev) => {
+        return {
+          ...prev,
+          x: prev.x + value,
+        };
+      });
     });
   }
 
@@ -481,24 +529,50 @@ export const NotFound = () => {
     });
   }
 
-  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const bindings: { [key: string]: () => void } = {
-      ArrowUp: () => changeVelocityY(-velocityDeltas.y),
-      ArrowDown: () => changeVelocityY(velocityDeltas.y),
-      ArrowLeft: () => changeVelocityX(-velocityDeltas.x),
-      ArrowRight: () => changeVelocityX(velocityDeltas.x),
-      KeyA: () => changeVelocityAngular(-velocityDeltas.angular),
-      KeyD: () => changeVelocityAngular(velocityDeltas.angular),
-      KeyS: () => sendSOS(),
-      KeyM: () => toggleMode(),
-      KeyV: () => setSoundOn(!soundOn),
-    };
+  useEffect(() => {
+    const bindings: Map<ButtonCode, () => void> = new Map([
+      ["ArrowUp", () => changeVelocityY(-velocityDeltas.y)],
+      ["ArrowDown", () => changeVelocityY(velocityDeltas.y)],
+      ["ArrowLeft", () => changeVelocityX(-velocityDeltas.x)],
+      ["ArrowRight", () => changeVelocityX(velocityDeltas.x)],
+      ["KeyA", () => changeVelocityAngular(-velocityDeltas.angular)],
+      ["KeyD", () => changeVelocityAngular(velocityDeltas.angular)],
+      ["KeyS", () => sendSOS()],
+      ["KeyM", () => toggleMode()],
+      ["KeyV", () => setSoundOn(!soundOn)],
+    ]);
 
-    const fn = bindings[event.code];
-    if (fn !== undefined) {
+    buttonsDown.forEach((code) => {
+      const fn = bindings.get(code);
+      if (fn !== undefined) {
+        fn();
+      }
+    });
+  }, [buttonsDown]);
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    const code = event.code as ButtonCode;
+
+    if (code !== undefined) {
       event.preventDefault();
-      fn();
+      setButtonsDown((prev) => [...prev, code]);
     }
+  }
+
+  function handleKeyUp(event: KeyboardEvent<HTMLDivElement>): void {
+    setButtonsDown((prev) => prev.filter((code) => code !== event.code));
+  }
+
+  function handleMouseDown(code: ButtonCode): void {
+    setButtonsDown((prev) => [...prev, code]);
+  }
+
+  function handleMouseUp(code: ButtonCode): void {
+    setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
+  }
+
+  function dynamicStyle(code: ButtonCode) {
+    return buttonsDown.includes(code) ? { backgroundColor: "#171717" } : {};
   }
 
   return (
@@ -510,6 +584,7 @@ export const NotFound = () => {
         backgroundColor: "black",
       }}
       onKeyDown={(e) => handleKeyDown(e)}
+      onKeyUp={(e) => handleKeyUp(e)}
       tabIndex={0}
     >
       <Stage width={window.innerWidth} height={window.innerHeight}>
@@ -566,7 +641,8 @@ export const NotFound = () => {
         >
           <button
             className="cursor-pointer text-2xl"
-            onClick={() => toggleMode()}
+            onMouseDown={() => handleMouseDown("KeyM")}
+            onMouseUp={() => handleMouseUp("KeyM")}
             title="Toggle message (M)"
           >
             <div
@@ -579,7 +655,8 @@ export const NotFound = () => {
 
           <button
             className="cursor-pointer text-2xl"
-            onClick={() => sendSOS()}
+            onMouseDown={() => handleMouseDown("KeyS")}
+            onMouseUp={() => handleMouseUp("KeyS")}
             title="Send S.O.S. (S)"
           >
             <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
@@ -589,7 +666,8 @@ export const NotFound = () => {
 
           <button
             className="cursor-pointer text-2xl"
-            onClick={() => setSoundOn(!soundOn)}
+            onMouseDown={() => handleMouseDown("KeyV")}
+            onMouseUp={() => handleMouseUp("KeyV")}
             title="Toggle sound (V)"
           >
             <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
@@ -602,28 +680,40 @@ export const NotFound = () => {
           <div className="flex flex-row space-x-3 justify-center items-center">
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityAngular(-velocityDeltas.angular)}
+              onMouseDown={() => handleMouseDown("KeyA")}
+              onMouseUp={() => handleMouseUp("KeyA")}
               title={`Change angular velocity by -${velocityDeltas.angular} (A)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("KeyA")}
+              >
                 <FontAwesomeIcon icon={faRotateLeft} />
               </div>
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityY(-velocityDeltas.y)}
+              onMouseDown={() => handleMouseDown("ArrowUp")}
+              onMouseUp={() => handleMouseUp("ArrowUp")}
               title={`Change Y velocity by -${velocityDeltas.y} (Up)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("ArrowUp")}
+              >
                 <FontAwesomeIcon icon={faArrowUp} />
               </div>
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityAngular(velocityDeltas.angular)}
+              onMouseDown={() => handleMouseDown("KeyD")}
+              onMouseUp={() => handleMouseUp("KeyD")}
               title={`Change angular velocity by ${velocityDeltas.angular} (D)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("KeyD")}
+              >
                 <FontAwesomeIcon icon={faRotateRight} />
               </div>
             </button>
@@ -631,28 +721,40 @@ export const NotFound = () => {
           <div className="flex flex-row space-x-3 justify-center items-center">
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityX(-velocityDeltas.x)}
+              onMouseDown={() => handleMouseDown("ArrowLeft")}
+              onMouseUp={() => handleMouseUp("ArrowLeft")}
               title={`Change X velocity by -${velocityDeltas.x} (Left)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("ArrowLeft")}
+              >
                 <FontAwesomeIcon icon={faArrowLeft} />
               </div>
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityY(velocityDeltas.y)}
+              onMouseDown={() => handleMouseDown("ArrowDown")}
+              onMouseUp={() => handleMouseUp("ArrowDown")}
               title={`Change Y velocity by ${velocityDeltas.y} (Down)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("ArrowDown")}
+              >
                 <FontAwesomeIcon icon={faArrowDown} />
               </div>
             </button>
             <button
               className="cursor-pointer text-2xl"
-              onClick={() => changeVelocityX(velocityDeltas.x)}
+              onMouseDown={() => handleMouseDown("ArrowRight")}
+              onMouseUp={() => handleMouseUp("ArrowRight")}
               title={`Change X velocity by ${velocityDeltas.x} (Right)`}
             >
-              <div className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center">
+              <div
+                className="bg-white bg-opacity-40 hover:bg-opacity-50 backdrop-blur-[10px] rounded-full w-16 h-16 flex justify-center items-center"
+                style={dynamicStyle("ArrowRight")}
+              >
                 <FontAwesomeIcon icon={faArrowRight} />
               </div>
             </button>

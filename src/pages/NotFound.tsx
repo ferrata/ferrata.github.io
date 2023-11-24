@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { KeyboardEvent, TouchEvent, useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowDown,
@@ -453,16 +453,26 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
 
 type DisplayMode = "message" | "stats" | "none";
 
-type ButtonCode =
+type ControlButtonCode =
   | "ArrowUp"
   | "ArrowDown"
   | "ArrowLeft"
   | "ArrowRight"
-  | "KeyS"
-  | "KeyM"
-  | "KeyV"
   | "KeyA"
   | "KeyD";
+
+type ButtonCode = ControlButtonCode | "KeyS" | "KeyM" | "KeyV";
+
+function isControlButton(code: ButtonCode): code is ControlButtonCode {
+  return (
+    code === "ArrowUp" ||
+    code === "ArrowDown" ||
+    code === "ArrowLeft" ||
+    code === "ArrowRight" ||
+    code === "KeyA" ||
+    code === "KeyD"
+  );
+}
 
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
@@ -470,6 +480,7 @@ export const NotFound = () => {
   const [callForHelp] = useSound(houston);
   const [transmitting, setTransmitting, velocity, setVelocity] = useSasa();
   const [buttonsDown, setButtonsDown] = useState<ButtonCode[]>([]);
+  const timeouts = useRef<Map<ButtonCode, NodeJS.Timeout>>(new Map());
 
   function toggleMode() {
     setMode((prev) => {
@@ -564,10 +575,59 @@ export const NotFound = () => {
   }
 
   function handleMouseDown(code: ButtonCode): void {
-    setButtonsDown((prev) => [...prev, code]);
+    if (isControlButton(code)) {
+      timeouts.current.set(
+        code,
+        setInterval(() => {
+          setButtonsDown((prev) => [...prev, code]);
+        }, 100)
+      );
+    } else {
+      setButtonsDown((prev) => [...prev, code]);
+    }
   }
 
   function handleMouseUp(code: ButtonCode): void {
+    setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
+    if (timeouts.current.has(code)) {
+      clearInterval(timeouts.current.get(code));
+      timeouts.current.delete(code);
+    }
+  }
+
+  function handleTouchStart(
+    event: TouchEvent<HTMLButtonElement>,
+    code: ButtonCode
+  ): void {
+    event.preventDefault();
+
+    if (timeouts.current.has(code)) {
+      return;
+    }
+
+    setButtonsDown((prev) => [...prev, code]);
+
+    if (isControlButton(code)) {
+      timeouts.current.set(
+        code,
+        setInterval(() => {
+          setButtonsDown((prev) => [...prev, code]);
+        }, 200)
+      );
+    }
+  }
+
+  function handleTouchEnd(
+    event: TouchEvent<HTMLButtonElement>,
+    code: ButtonCode
+  ): void {
+    event.preventDefault();
+
+    if (timeouts.current.has(code)) {
+      clearInterval(timeouts.current.get(code));
+      timeouts.current.delete(code);
+    }
+
     setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
   }
 
@@ -682,6 +742,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("KeyA")}
               onMouseUp={() => handleMouseUp("KeyA")}
+              onMouseLeave={() => handleMouseUp("KeyA")}
+              onTouchStart={(e) => handleTouchStart(e, "KeyA")}
+              onTouchEnd={(e) => handleTouchEnd(e, "KeyA")}
+              onTouchCancel={(e) => handleTouchEnd(e, "KeyA")}
               title={`Change angular velocity by -${velocityDeltas.angular} (A)`}
             >
               <div
@@ -695,6 +759,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("ArrowUp")}
               onMouseUp={() => handleMouseUp("ArrowUp")}
+              onMouseLeave={() => handleMouseUp("ArrowUp")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowUp")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowUp")}
+              onTouchCancel={(e) => handleTouchEnd(e, "ArrowUp")}
               title={`Change Y velocity by -${velocityDeltas.y} (Up)`}
             >
               <div
@@ -708,6 +776,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("KeyD")}
               onMouseUp={() => handleMouseUp("KeyD")}
+              onMouseLeave={() => handleMouseUp("KeyD")}
+              onTouchStart={(e) => handleTouchStart(e, "KeyD")}
+              onTouchEnd={(e) => handleTouchEnd(e, "KeyD")}
+              onTouchCancel={(e) => handleTouchEnd(e, "KeyD")}
               title={`Change angular velocity by ${velocityDeltas.angular} (D)`}
             >
               <div
@@ -723,6 +795,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("ArrowLeft")}
               onMouseUp={() => handleMouseUp("ArrowLeft")}
+              onMouseLeave={() => handleMouseUp("ArrowLeft")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowLeft")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowLeft")}
+              onTouchCancel={(e) => handleTouchEnd(e, "ArrowLeft")}
               title={`Change X velocity by -${velocityDeltas.x} (Left)`}
             >
               <div
@@ -736,6 +812,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("ArrowDown")}
               onMouseUp={() => handleMouseUp("ArrowDown")}
+              onMouseLeave={() => handleMouseUp("ArrowDown")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowDown")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowDown")}
+              onTouchCancel={(e) => handleTouchEnd(e, "ArrowDown")}
               title={`Change Y velocity by ${velocityDeltas.y} (Down)`}
             >
               <div
@@ -749,6 +829,10 @@ export const NotFound = () => {
               className="cursor-pointer text-2xl"
               onMouseDown={() => handleMouseDown("ArrowRight")}
               onMouseUp={() => handleMouseUp("ArrowRight")}
+              onMouseLeave={() => handleMouseUp("ArrowRight")}
+              onTouchStart={(e) => handleTouchStart(e, "ArrowRight")}
+              onTouchEnd={(e) => handleTouchEnd(e, "ArrowRight")}
+              onTouchCancel={(e) => handleTouchEnd(e, "ArrowRight")}
               title={`Change X velocity by ${velocityDeltas.x} (Right)`}
             >
               <div

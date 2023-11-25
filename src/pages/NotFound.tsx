@@ -21,6 +21,9 @@ import {
   Sprite,
   Texture,
   ITextStyle,
+  Assets,
+  Application,
+  ICanvas,
 } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
 import { CRTFilter, CRTFilterOptions } from "pixi-filters";
@@ -37,6 +40,7 @@ import blackHole from "../assets/black-hole.jpg";
 import sasa from "../assets/sasa.png";
 import sasaLogo from "../assets/sasa-logo.png";
 import houston from "../assets/houston.ogg";
+// import { useEffectAsync } from "../hooks/useEffectAsync";
 
 type Background = {
   entity: string;
@@ -167,11 +171,7 @@ const velocityDeltas = {
 } as const;
 
 function useSasa() {
-  const [velocity, setVelocity] = useState<Velocity>({
-    x: 0.5,
-    y: 0,
-    angular: velocityDeltas.angular,
-  });
+  const [velocity, setVelocity] = useState<Velocity>(initialVelocity);
 
   const [transmitting, setTransmitting] = useState<boolean>(false);
   return [transmitting, setTransmitting, velocity, setVelocity] as const;
@@ -251,10 +251,10 @@ class DisplayPad {
   }
 }
 
-const zeroVelocity: Velocity = {
-  x: 0,
+const initialVelocity: Velocity = {
+  x: 0.5,
   y: 0,
-  angular: 0,
+  angular: velocityDeltas.angular,
 };
 
 function setCover(image: Sprite, container: { width: number; height: number }) {
@@ -271,53 +271,101 @@ function setCover(image: Sprite, container: { width: number; height: number }) {
   image.y = container.height / 2;
 }
 
+function standbyScreen(
+  app: Application<ICanvas>,
+  filter: CRTFilterWithInterference
+) {
+  app.stage.filters = [filter];
+
+  app.stage.removeChildren();
+
+  const screen = new Sprite(Texture.WHITE);
+  screen.tint = 0x161616;
+  screen.width = app.screen.width;
+  screen.height = app.screen.height;
+  app.stage.addChild(screen);
+
+  const timer = setInterval(() => filter.tick(100), 100);
+
+  return () => {
+    app.stage.removeChildren();
+    timer && clearInterval(timer);
+  };
+}
+
 function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   const app = useApp();
+  app.resizeTo = window;
+
   const [filter, _] = useState<CRTFilterWithInterference>(
     new CRTFilterWithInterference()
   );
   const sasaGraphics = useRef<Graphics>();
   const sasaContainer = useRef<Container>();
-  const sasaVelocity = useRef<Velocity>(zeroVelocity);
-  const background = useRef<Background>(randomBackground());
+  const sasaVelocity = useRef<Velocity>(initialVelocity);
+  const [background, setBackground] = useState<Background>();
+  const backgroundSprite = useRef<Sprite>();
   const statsPad = useRef<DisplayPad>();
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
 
   useEffect(() => {
-    app.stage.filters = [filter];
+    async function loadAssets() {
+      const cleanupStandbyScreen = standbyScreen(app, filter);
 
-    app.stage.removeChildren();
+      const currentBackground = randomBackground();
+      const backgroundAsset = await Assets.load(currentBackground.resource);
 
-    background.current = randomBackground();
-    const backgroundSprite = new Sprite(
-      Texture.from(background.current.resource)
-    );
-    app.stage.addChild(backgroundSprite);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      cleanupStandbyScreen();
 
-    backgroundSprite.anchor.set(0.5);
-    setCover(backgroundSprite, app.screen);
+      backgroundSprite.current = Sprite.from(backgroundAsset);
+      app.stage.addChild(backgroundSprite.current);
 
-    const container = (sasaContainer.current = new Container());
-    app.stage.addChild(container);
+      backgroundSprite.current.anchor.set(0.5);
+      setCover(backgroundSprite.current, app.screen);
 
-    const sprite = new Sprite(Texture.from(sasa));
-    sprite.anchor.set(0.5);
-    container.addChild(sprite);
+      const container = (sasaContainer.current = new Container());
+      app.stage.addChild(container);
 
-    container.addChild((sasaGraphics.current = new Graphics()));
+      const sprite = new Sprite(Texture.from(sasa));
+      sprite.anchor.set(0.5);
+      container.addChild(sprite);
 
-    const isBlackHole = background.current.entity === "Black Hole";
+      container.addChild((sasaGraphics.current = new Graphics()));
+
+      statsPad.current = new DisplayPad(app.stage);
+
+      app.stage.filters = [filter];
+
+      setBackground(currentBackground);
+    }
+
+    loadAssets();
+  }, []);
+
+  useEffect(() => {
+    if (background === undefined || sasaContainer.current === undefined) {
+      return;
+    }
+    const container = sasaContainer.current;
+    const containerWidth = Math.max(370, container.width);
+
+    const isBlackHole = background.entity === "Black Hole";
 
     container.scale.set(isBlackHole ? 0.01 : 1);
-    container.x = isBlackHole ? app.screen.width / 4 : -app.screen.width / 4;
+    container.x = isBlackHole ? app.screen.width / 4 : -containerWidth;
     container.y = app.screen.height / 2;
-
-    statsPad.current = new DisplayPad(app.stage);
 
     let sasaAppeared = !isBlackHole;
 
     app.ticker.add((delta) => {
+      filter.tick(delta);
+
+      if (backgroundSprite.current !== undefined) {
+        setCover(backgroundSprite.current, app.screen);
+      }
+
       if (!sasaAppeared && container.scale.x < 1) {
         container.scale.set(container.scale.x + 0.05 * delta);
 
@@ -326,18 +374,16 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
         }
       }
 
-      setCover(backgroundSprite, app.screen);
-
       container.rotation += sasaVelocity.current.angular * delta;
       container.position.x += sasaVelocity.current.x * delta;
       container.position.y += sasaVelocity.current.y * delta;
 
-      if (container.position.x > app.screen.width + container.width) {
-        container.position.x = -container.width;
+      if (container.position.x > app.screen.width + containerWidth) {
+        container.position.x = -containerWidth;
       }
 
-      if (container.position.x < -container.width) {
-        container.position.x = app.screen.width + container.width;
+      if (container.position.x < -containerWidth) {
+        container.position.x = app.screen.width + containerWidth;
       }
 
       if (container.position.y > app.screen.height + container.height) {
@@ -347,12 +393,8 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
       if (container.position.y < -container.height) {
         container.position.y = app.screen.height + container.height;
       }
-
-      filter.tick(delta);
     });
-
-    app.resizeTo = window;
-  }, [app]);
+  }, [background]);
 
   useEffect(() => {
     filter.enabled = interference.value > 0;
@@ -414,7 +456,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   }, [app, velocity]);
 
   useEffect(() => {
-    if (statsPad.current === undefined) {
+    if (statsPad.current === undefined || background === undefined) {
       return;
     }
 
@@ -424,7 +466,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
       return;
     }
 
-    const location = background.current;
+    const location = background;
 
     const statsText = [
       "location",
@@ -438,7 +480,7 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
     ].join("\n");
 
     statsPad.current.setText(statsText);
-  }, [app, showStats, velocity]);
+  }, [app, showStats, velocity, background]);
 
   useEffect(() => {
     resize();
@@ -637,7 +679,7 @@ export const NotFound = () => {
 
   return (
     <div
-      className="app"
+      className="app "
       role="main"
       style={{
         overflow: "hidden",
@@ -647,7 +689,7 @@ export const NotFound = () => {
       onKeyUp={(e) => handleKeyUp(e)}
       tabIndex={0}
     >
-      <Stage width={window.innerWidth} height={window.innerHeight}>
+      <Stage>
         <PixiScene
           transmitting={transmitting}
           velocity={velocity}

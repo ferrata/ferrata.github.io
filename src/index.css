@@ -4,11 +4,11 @@
 
 html,
 body {
-  height: 100vh;
-  backface-visibility: hidden;
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  -webkit-transform: translate3d(0, 0, 0);
+  height: 100%;
+  height: -moz-available;
+  height: -webkit-fill-available;
+  height: fill-available;
+  height: stretch;
 }
 
 body {

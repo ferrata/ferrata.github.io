@@ -161,14 +161,22 @@ const velocityDeltas = {
 
 function useSasa() {
   const [velocity, setVelocity] = useState<Velocity>(initialVelocity);
-
   const [transmitting, setTransmitting] = useState<boolean>(false);
-  return [transmitting, setTransmitting, velocity, setVelocity] as const;
+  const [battery, setBattery] = useState<number>(100);
+  return {
+    transmitting,
+    setTransmitting,
+    velocity,
+    setVelocity,
+    battery,
+    setBattery,
+  } as const;
 }
 
 type PixiSceneProps = {
   transmitting: boolean;
   velocity: Velocity;
+  battery: number;
   showStats: boolean;
 };
 
@@ -282,7 +290,22 @@ function standbyScreen(
   };
 }
 
-function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
+function batteryText(battery: number) {
+  const cellNumber = 12;
+  const cells = Math.floor((battery / 100) * cellNumber);
+  const emptyCells = cellNumber - cells;
+
+  return battery <= 0
+    ? "◻".repeat(cellNumber)
+    : "◼".repeat(cells) + "◻".repeat(emptyCells);
+}
+
+function PixiScene({
+  transmitting,
+  velocity,
+  battery,
+  showStats,
+}: PixiSceneProps) {
   const app = useApp();
 
   const [filter, _] = useState<CRTFilterWithInterference>(
@@ -465,10 +488,14 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
       `  x: ${velocity.x.toFixed(2)}`,
       `  y: ${velocity.y.toFixed(2)}`,
       `  ω: ${velocity.angular.toFixed(3)}`,
+      "battery",
+      `  source: PV cells`,
+      `  status: ${batteryText(battery)}`,
+      `          ${battery.toFixed(1)}% ${battery < 100 ? "(charging)" : ""}`,
     ].join("\n");
 
     statsPad.current.setText(statsText);
-  }, [app, showStats, velocity, background]);
+  }, [app, showStats, velocity, battery, background]);
 
   useEffect(() => {
     const resize = () =>
@@ -511,9 +538,26 @@ export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
   const [mode, setMode] = useState<DisplayMode>("message");
   const [callForHelp] = useSound(houston);
-  const [transmitting, setTransmitting, velocity, setVelocity] = useSasa();
+  const {
+    transmitting,
+    setTransmitting,
+    velocity,
+    setVelocity,
+    battery,
+    setBattery,
+  } = useSasa();
   const [buttonsDown, setButtonsDown] = useState<ButtonCode[]>([]);
   const timeouts = useRef<Map<ButtonCode, NodeJS.Timeout>>(new Map());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBattery((prev) => Math.min(100, prev + 0.1));
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
 
   function toggleMode() {
     setMode((prev) => {
@@ -529,6 +573,12 @@ export const NotFound = () => {
   }
 
   function transmit(fn: () => void) {
+    if (battery <= 0) {
+      return;
+    }
+
+    setBattery((prev) => Math.max(0, prev - 0.1));
+
     setTransmitting(true);
     fn();
     setTimeout(() => {
@@ -595,6 +645,10 @@ export const NotFound = () => {
   }, [buttonsDown]);
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (battery <= 0) {
+      return;
+    }
+
     const code = event.code as ButtonCode;
 
     if (code !== undefined) {
@@ -608,6 +662,10 @@ export const NotFound = () => {
   }
 
   function handleButtonDownStart(code: ButtonCode, interval: number): void {
+    if (battery <= 0) {
+      return;
+    }
+
     if (timeouts.current.has(code)) {
       return;
     }
@@ -681,6 +739,7 @@ export const NotFound = () => {
         <PixiScene
           transmitting={transmitting}
           velocity={velocity}
+          battery={battery}
           showStats={mode === "stats"}
         />
       </Stage>

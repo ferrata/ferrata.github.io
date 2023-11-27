@@ -40,7 +40,6 @@ import blackHole from "../assets/black-hole.jpg";
 import sasa from "../assets/sasa.png";
 import sasaLogo from "../assets/sasa-logo.png";
 import houston from "../assets/houston.ogg";
-// import { useEffectAsync } from "../hooks/useEffectAsync";
 
 type Background = {
   entity: string;
@@ -112,16 +111,6 @@ class CRTFilterWithInterference extends CRTFilter {
 
     this.time += 0.01 * deltaTime;
   }
-}
-
-function resize() {
-  const canvas = document.querySelector("canvas");
-  if (!canvas) {
-    return;
-  }
-
-  canvas.style.width = `${window.innerWidth - 1}px`;
-  canvas.style.height = `${window.innerHeight - 1}px`;
 }
 
 function randomInterference(): Interference {
@@ -295,7 +284,6 @@ function standbyScreen(
 
 function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   const app = useApp();
-  app.resizeTo = window;
 
   const [filter, _] = useState<CRTFilterWithInterference>(
     new CRTFilterWithInterference()
@@ -483,6 +471,9 @@ function PixiScene({ transmitting, velocity, showStats }: PixiSceneProps) {
   }, [app, showStats, velocity, background]);
 
   useEffect(() => {
+    const resize = () =>
+      app.renderer.resize(window.innerWidth, window.innerHeight);
+
     resize();
     window.addEventListener("resize", resize);
     return () => {
@@ -616,33 +607,7 @@ export const NotFound = () => {
     setButtonsDown((prev) => prev.filter((code) => code !== event.code));
   }
 
-  function handleMouseDown(code: ButtonCode): void {
-    if (isControlButton(code)) {
-      timeouts.current.set(
-        code,
-        setInterval(() => {
-          setButtonsDown((prev) => [...prev, code]);
-        }, 100)
-      );
-    } else {
-      setButtonsDown((prev) => [...prev, code]);
-    }
-  }
-
-  function handleMouseUp(code: ButtonCode): void {
-    setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
-    if (timeouts.current.has(code)) {
-      clearInterval(timeouts.current.get(code));
-      timeouts.current.delete(code);
-    }
-  }
-
-  function handleTouchStart(
-    event: TouchEvent<HTMLButtonElement>,
-    code: ButtonCode
-  ): void {
-    event.preventDefault();
-
+  function handleButtonDownStart(code: ButtonCode, interval: number): void {
     if (timeouts.current.has(code)) {
       return;
     }
@@ -654,9 +619,34 @@ export const NotFound = () => {
         code,
         setInterval(() => {
           setButtonsDown((prev) => [...prev, code]);
-        }, 200)
+        }, interval)
       );
     }
+  }
+
+  function handleButtonDownEnd(code: ButtonCode): void {
+    if (timeouts.current.has(code)) {
+      clearInterval(timeouts.current.get(code));
+      timeouts.current.delete(code);
+    }
+
+    setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
+  }
+
+  function handleMouseDown(code: ButtonCode): void {
+    handleButtonDownStart(code, 250);
+  }
+
+  function handleMouseUp(code: ButtonCode): void {
+    handleButtonDownEnd(code);
+  }
+
+  function handleTouchStart(
+    event: TouchEvent<HTMLButtonElement>,
+    code: ButtonCode
+  ): void {
+    event.preventDefault();
+    handleButtonDownStart(code, 200);
   }
 
   function handleTouchEnd(
@@ -664,13 +654,7 @@ export const NotFound = () => {
     code: ButtonCode
   ): void {
     event.preventDefault();
-
-    if (timeouts.current.has(code)) {
-      clearInterval(timeouts.current.get(code));
-      timeouts.current.delete(code);
-    }
-
-    setButtonsDown((prev) => prev.filter((prevCode) => prevCode !== code));
+    handleButtonDownEnd(code);
   }
 
   function dynamicStyle(code: ButtonCode) {
@@ -689,7 +673,11 @@ export const NotFound = () => {
       onKeyUp={(e) => handleKeyUp(e)}
       tabIndex={0}
     >
-      <Stage>
+      <Stage
+        style={{ position: "fixed" }}
+        width={window.innerWidth}
+        height={window.innerHeight}
+      >
         <PixiScene
           transmitting={transmitting}
           velocity={velocity}

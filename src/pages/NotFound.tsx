@@ -24,6 +24,9 @@ import {
   Assets,
   Application,
   ICanvas,
+  AnimatedSprite,
+  Spritesheet,
+  BaseTexture,
 } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
 import { CRTFilter, CRTFilterOptions } from "pixi-filters";
@@ -38,6 +41,7 @@ import planetaryNebula from "../assets/planetary-nebula.jpg";
 import swanNebula from "../assets/swan-nebula.jpg";
 import blackHole from "../assets/black-hole.jpg";
 import sasa from "../assets/sasa.png";
+import sasaMouthSprites from "../assets/sasa-mouth-sprites.png";
 import sasaLogo from "../assets/sasa-logo.png";
 import houston from "../assets/houston.ogg";
 
@@ -178,6 +182,7 @@ type PixiSceneProps = {
   velocity: Velocity;
   battery: number;
   showStats: boolean;
+  speaking: boolean;
 };
 
 class DisplayPad {
@@ -300,11 +305,105 @@ function batteryText(battery: number) {
     : "◼".repeat(cells) + "◻".repeat(emptyCells);
 }
 
+const atlasData = {
+  frames: {
+    silent: {
+      frame: { x: 50, y: 30, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    a: {
+      frame: { x: 0, y: 0, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    o: {
+      frame: { x: 25, y: 0, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    s: {
+      frame: { x: 50, y: 0, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    e: {
+      frame: { x: 0, y: 15, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    f: {
+      frame: { x: 25, y: 15, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    m: {
+      frame: { x: 50, y: 15, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    t: {
+      frame: { x: 0, y: 30, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+    p: {
+      frame: { x: 25, y: 30, w: 25, h: 15 },
+      sourceSize: { w: 25, h: 15 },
+      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
+    },
+  },
+  meta: {
+    image: sasaMouthSprites,
+    format: "RGBA8888",
+    size: { w: 74, h: 45 },
+    scale: "1",
+  },
+  animations: {
+    mouth: ["silent"], //array of frames by name
+    ao: ["a", "o", "s", "e", "f", "m", "t", "p"],
+    houstonIHaveAProblem: [
+      "silent",
+      "f",
+      "e",
+      "o",
+      "s",
+      "t",
+      "o",
+      "m",
+      "m",
+      "m",
+      "a",
+      "e",
+      "e",
+      "f",
+      "a",
+      "a",
+      "f",
+      "a",
+      "a",
+      "p",
+      "a",
+      "o",
+      "o",
+      "p",
+      "t",
+      "e",
+      "e",
+      "m",
+      "m",
+      "silent",
+      "silent",
+    ],
+  },
+};
+
 function PixiScene({
   transmitting,
   velocity,
   battery,
   showStats,
+  speaking,
 }: PixiSceneProps) {
   const app = useApp();
 
@@ -316,6 +415,7 @@ function PixiScene({
   const sasaVelocity = useRef<Velocity>(initialVelocity);
   const [background, setBackground] = useState<Background>();
   const backgroundSprite = useRef<Sprite>();
+  const sasaMouth = useRef<AnimatedSprite>();
   const statsPad = useRef<DisplayPad>();
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
@@ -327,7 +427,7 @@ function PixiScene({
       const currentBackground = randomBackground();
       const backgroundAsset = await Assets.load(currentBackground.resource);
 
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      // await new Promise((resolve) => setTimeout(resolve, 3000));
       cleanupStandbyScreen();
 
       backgroundSprite.current = Sprite.from(backgroundAsset);
@@ -342,6 +442,26 @@ function PixiScene({
       const sprite = new Sprite(Texture.from(sasa));
       sprite.anchor.set(0.5);
       container.addChild(sprite);
+
+      const spritesheet = new Spritesheet(
+        BaseTexture.from(atlasData.meta.image),
+        atlasData
+      );
+
+      await spritesheet.parse();
+
+      const anim = new AnimatedSprite(
+        spritesheet.animations.houstonIHaveAProblem
+      );
+
+      anim.scale.set(1.5);
+      anim.position.set(-70, -72);
+      anim.rotation = -30 * (Math.PI / 180);
+
+      anim.animationSpeed = 0.4;
+      anim.loop = false;
+
+      container.addChild((sasaMouth.current = anim));
 
       container.addChild((sasaGraphics.current = new Graphics()));
 
@@ -453,6 +573,20 @@ function PixiScene({
   }, [app, transmitting]);
 
   useEffect(() => {
+    const sasa = sasaMouth?.current;
+
+    if (sasa === undefined) {
+      return;
+    }
+
+    if (speaking) {
+      sasa.play();
+    } else {
+      sasa.gotoAndStop(0);
+    }
+  }, [app, speaking]);
+
+  useEffect(() => {
     const sasa = sasaContainer?.current;
 
     if (sasa === undefined) {
@@ -538,6 +672,7 @@ export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
   const [mode, setMode] = useState<DisplayMode>("message");
   const [callForHelp] = useSound(houston);
+  const [speaking, setSpeaking] = useState<boolean>(false);
   const {
     transmitting,
     setTransmitting,
@@ -589,6 +724,10 @@ export const NotFound = () => {
   function sendSOS() {
     transmit(() => {
       if (soundOn) {
+        setSpeaking(true);
+        setTimeout(() => {
+          setSpeaking(false);
+        }, 1000);
         callForHelp();
       }
     });
@@ -741,6 +880,7 @@ export const NotFound = () => {
           velocity={velocity}
           battery={battery}
           showStats={mode === "stats"}
+          speaking={speaking}
         />
       </Stage>
 

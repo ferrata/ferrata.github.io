@@ -1,5 +1,5 @@
 import avatar from "../assets/avatar.jpg";
-import { Link } from "../components/Link";
+import { Link } from "../components/link";
 
 export const Home = () => {
   return (

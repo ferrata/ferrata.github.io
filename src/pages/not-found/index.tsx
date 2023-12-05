@@ -13,93 +13,43 @@ import {
   faWindowRestore,
 } from "@fortawesome/free-solid-svg-icons";
 import {
-  Text,
-  TextMetrics,
-  TextStyle,
   Container,
   Graphics,
   Sprite,
   Texture,
-  ITextStyle,
   Assets,
   Application,
   ICanvas,
-  AnimatedSprite,
-  Spritesheet,
-  BaseTexture,
 } from "pixi.js";
 import { Stage, useApp } from "@pixi/react";
-import { CRTFilter, CRTFilterOptions } from "pixi-filters";
 import useSound from "use-sound";
 
-import useNoise from "../hooks/useNoise";
+import useNoise from "../../hooks/use-noise";
 
-import dumbbellNebula from "../assets/dumbbell-nebula.jpg";
-import godzillaNebula from "../assets/godzilla-nebula.jpg";
-import horseheadNebula from "../assets/horsehead-nebula.jpg";
-import planetaryNebula from "../assets/planetary-nebula.jpg";
-import swanNebula from "../assets/swan-nebula.jpg";
-import blackHole from "../assets/black-hole.jpg";
-import sasa from "../assets/sasa.png";
-import sasaMouthSprites from "../assets/sasa-mouth-sprites.png";
-import sasaLogo from "../assets/sasa-logo.png";
-import houston from "../assets/houston.ogg";
+import sasa from "../../assets/sasa.png";
+import sasaLogo from "../../assets/sasa-logo.png";
+import houston from "../../assets/houston.ogg";
 
-type Background = {
-  entity: string;
-  constellation: string;
-  closestSystem: string;
-  resource: string;
-};
+import { Background, randomBackground } from "./background";
+import { batteryText, setCover } from "./utils";
+import { MouthAnimation, createMouthAnimation } from "./mouth-animation";
+import { ButtonCode, isControlButton } from "./buttons";
+import { useInterference } from "./interference";
+import { Velocity, useSasa } from "./sasa";
+import { DisplayPad } from "./display-pad";
+import { DisplayMode, nextDisplayMode } from "./display-mode";
+import { CRTFilter, CRTFilterOptions } from "pixi-filters";
 
-function randomBackground(): Background {
-  const backgrounds = [
-    {
-      entity: "Dumbbell Nebula",
-      constellation: "Vulpecula",
-      closestSystem: "M27",
-      resource: dumbbellNebula,
-    },
-    {
-      entity: "Godzilla Nebula",
-      constellation: "Orion",
-      closestSystem: "IC 2118",
-      resource: godzillaNebula,
-    },
-    {
-      entity: "Horsehead Nebula",
-      constellation: "Orion",
-      closestSystem: "IC 434",
-      resource: horseheadNebula,
-    },
-    {
-      entity: "Planetary Nebula",
-      constellation: "Aquarius",
-      closestSystem: "NGC 7009",
-      resource: planetaryNebula,
-    },
-    {
-      entity: "Swan Nebula",
-      constellation: "Sagittarius",
-      closestSystem: "M17",
-      resource: swanNebula,
-    },
-    {
-      entity: "Black Hole",
-      constellation: "Virgo",
-      closestSystem: "M87",
-      resource: blackHole,
-    },
-  ] as Background[];
+const velocityDeltas = {
+  x: 0.1,
+  y: 0.1,
+  angular: 0.001,
+} as const;
 
-  const index = Math.floor(Math.random() * backgrounds.length);
-
-  return backgrounds[index];
-}
-
-type Interference = {
-  value: number;
-  timeMilliseconds: number;
+const initialVelocity: Velocity = {
+  x: 0.5,
+  y: 0,
+  angular: velocityDeltas.angular,
 };
 
 class CRTFilterWithInterference extends CRTFilter {
@@ -115,162 +65,6 @@ class CRTFilterWithInterference extends CRTFilter {
 
     this.time += 0.01 * deltaTime;
   }
-}
-
-function randomInterference(): Interference {
-  return {
-    value: Math.random() > 0.2 ? Math.random() * 30 : 0,
-    timeMilliseconds: Math.max(Math.random() * 5000, 200),
-  };
-}
-
-function useInterference() {
-  const [interference, setInterference] = useState<Interference>(
-    randomInterference()
-  );
-  const prevTimeMilliseconds = useRef<number>(0);
-
-  useEffect(() => {
-    const tick = 100;
-
-    const interval = setInterval(() => {
-      if (prevTimeMilliseconds.current <= 0) {
-        const newInterference = randomInterference();
-        prevTimeMilliseconds.current = newInterference.timeMilliseconds;
-        setInterference(newInterference);
-      }
-
-      prevTimeMilliseconds.current = prevTimeMilliseconds.current - tick;
-    }, tick);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-
-  return interference;
-}
-
-type Velocity = {
-  x: number;
-  y: number;
-  angular: number;
-};
-
-const velocityDeltas = {
-  x: 0.1,
-  y: 0.1,
-  angular: 0.001,
-} as const;
-
-function useSasa() {
-  const [velocity, setVelocity] = useState<Velocity>(initialVelocity);
-  const [transmitting, setTransmitting] = useState<boolean>(false);
-  const [battery, setBattery] = useState<number>(100);
-  return {
-    transmitting,
-    setTransmitting,
-    velocity,
-    setVelocity,
-    battery,
-    setBattery,
-  } as const;
-}
-
-type PixiSceneProps = {
-  transmitting: boolean;
-  velocity: Velocity;
-  battery: number;
-  showStats: boolean;
-  speaking: boolean;
-};
-
-class DisplayPad {
-  private borderWidth = 10;
-  private graphics: Graphics;
-  private text: Text;
-  private style: TextStyle;
-
-  public get width(): number {
-    return this.graphics.width;
-  }
-
-  public get height(): number {
-    return this.graphics.height;
-  }
-
-  constructor(
-    parent: Container,
-    styleOptions: Partial<ITextStyle> = {
-      fontFamily: "Monaco, monospace",
-      fontSize: window.innerWidth > 768 ? 16 : 12,
-      fill: "white",
-      stroke: "gray",
-      align: "left",
-    }
-  ) {
-    this.graphics = new Graphics();
-    parent.addChild(this.graphics);
-
-    this.style = new TextStyle(styleOptions);
-    this.text = new Text("", this.style);
-    parent.addChild(this.text);
-
-    this.setPosition(0, 0);
-  }
-
-  public setPosition(x: number, y: number): DisplayPad {
-    this.graphics.position.set(x, y);
-    this.text.position.set(x + this.borderWidth, y + this.borderWidth);
-
-    return this;
-  }
-
-  public clear(): DisplayPad {
-    this.graphics.clear();
-    this.text.text = "";
-
-    return this;
-  }
-
-  public setText(text: string): DisplayPad {
-    const logMetrics = TextMetrics.measureText(text, this.style);
-
-    this.graphics
-      .clear()
-      .beginFill(0x000000, 0.5)
-      .drawRect(
-        0,
-        0,
-        logMetrics.width + this.borderWidth * 2,
-        logMetrics.height + this.borderWidth * 2
-      )
-      .endFill();
-
-    this.text.text = text;
-
-    return this;
-  }
-}
-
-const initialVelocity: Velocity = {
-  x: 0.5,
-  y: 0,
-  angular: velocityDeltas.angular,
-};
-
-function setCover(image: Sprite, container: { width: number; height: number }) {
-  const imageRatio = image.height / image.width;
-  const screenRatio = container.height / container.width;
-  if (screenRatio > imageRatio) {
-    image.height = container.height;
-    image.width = container.height / imageRatio;
-  } else {
-    image.width = container.width;
-    image.height = container.width * imageRatio;
-  }
-  image.x = container.width / 2;
-  image.y = container.height / 2;
 }
 
 function standbyScreen(
@@ -295,127 +89,30 @@ function standbyScreen(
   };
 }
 
-function batteryText(battery: number) {
-  const cellNumber = 12;
-  const cells = Math.floor((battery / 100) * cellNumber);
-  const emptyCells = cellNumber - cells;
-
-  return battery <= 0
-    ? "◻".repeat(cellNumber)
-    : "◼".repeat(cells) + "◻".repeat(emptyCells);
-}
-
-const atlasData = {
-  frames: {
-    silent: {
-      frame: { x: 50, y: 30, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    a: {
-      frame: { x: 0, y: 0, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    o: {
-      frame: { x: 25, y: 0, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    s: {
-      frame: { x: 50, y: 0, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    e: {
-      frame: { x: 0, y: 15, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    f: {
-      frame: { x: 25, y: 15, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    m: {
-      frame: { x: 50, y: 15, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    t: {
-      frame: { x: 0, y: 30, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-    p: {
-      frame: { x: 25, y: 30, w: 25, h: 15 },
-      sourceSize: { w: 25, h: 15 },
-      spriteSourceSize: { x: 0, y: 0, w: 25, h: 15 },
-    },
-  },
-  meta: {
-    image: sasaMouthSprites,
-    format: "RGBA8888",
-    size: { w: 74, h: 45 },
-    scale: "1",
-  },
-  animations: {
-    mouth: ["silent"], //array of frames by name
-    ao: ["a", "o", "s", "e", "f", "m", "t", "p"],
-    houstonIHaveAProblem: [
-      "silent",
-      "f",
-      "e",
-      "o",
-      "s",
-      "t",
-      "o",
-      "m",
-      "m",
-      "m",
-      "a",
-      "e",
-      "e",
-      "f",
-      "a",
-      "a",
-      "f",
-      "a",
-      "a",
-      "p",
-      "a",
-      "o",
-      "o",
-      "p",
-      "t",
-      "e",
-      "e",
-      "m",
-      "m",
-      "silent",
-      "silent",
-    ],
-  },
+type SceneProps = {
+  transmitting: boolean;
+  velocity: Velocity;
+  battery: number;
+  showStats: boolean;
+  speaking: boolean;
 };
 
-function PixiScene({
+function Scene({
   transmitting,
   velocity,
   battery,
   showStats,
   speaking,
-}: PixiSceneProps) {
+}: SceneProps) {
   const app = useApp();
 
-  const [filter, _] = useState<CRTFilterWithInterference>(
-    new CRTFilterWithInterference()
-  );
+  const [filter, _] = useState(new CRTFilterWithInterference());
   const sasaGraphics = useRef<Graphics>();
   const sasaContainer = useRef<Container>();
   const sasaVelocity = useRef<Velocity>(initialVelocity);
   const [background, setBackground] = useState<Background>();
   const backgroundSprite = useRef<Sprite>();
-  const sasaMouth = useRef<AnimatedSprite>();
+  const sasaMouth = useRef<MouthAnimation>();
   const statsPad = useRef<DisplayPad>();
   const { soundOn, setOptions } = useNoise();
   const interference = useInterference();
@@ -427,7 +124,7 @@ function PixiScene({
       const currentBackground = randomBackground();
       const backgroundAsset = await Assets.load(currentBackground.resource);
 
-      // await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       cleanupStandbyScreen();
 
       backgroundSprite.current = Sprite.from(backgroundAsset);
@@ -443,25 +140,13 @@ function PixiScene({
       sprite.anchor.set(0.5);
       container.addChild(sprite);
 
-      const spritesheet = new Spritesheet(
-        BaseTexture.from(atlasData.meta.image),
-        atlasData
-      );
+      const mouth = (await createMouthAnimation())
+        .setScale(1.5)
+        .setPosition(-70, -72)
+        .setRotation(-30 * (Math.PI / 180))
+        .setAnimationSpeed(0.4);
 
-      await spritesheet.parse();
-
-      const anim = new AnimatedSprite(
-        spritesheet.animations.houstonIHaveAProblem
-      );
-
-      anim.scale.set(1.5);
-      anim.position.set(-70, -72);
-      anim.rotation = -30 * (Math.PI / 180);
-
-      anim.animationSpeed = 0.4;
-      anim.loop = false;
-
-      container.addChild((sasaMouth.current = anim));
+      container.addChild((sasaMouth.current = mouth));
 
       container.addChild((sasaGraphics.current = new Graphics()));
 
@@ -580,16 +265,17 @@ function PixiScene({
     }
 
     if (speaking) {
-      sasa.play();
+      sasa.startSpeaking();
     } else {
-      sasa.gotoAndStop(0);
+      sasa.stopSpeaking();
     }
   }, [app, speaking]);
 
   useEffect(() => {
     const sasa = sasaContainer?.current;
+    const mouth = sasaMouth?.current;
 
-    if (sasa === undefined) {
+    if (sasa === undefined || mouth === undefined) {
       return;
     }
 
@@ -598,6 +284,12 @@ function PixiScene({
     sasa.position.y += velocity.y;
 
     sasaVelocity.current = velocity;
+
+    if (!mouth.isOpen && Math.abs(velocity.angular) > 0.05) {
+      mouth.setOpen();
+    } else if (mouth.isOpen && Math.abs(velocity.angular) < 0.05) {
+      mouth.setClosed();
+    }
   }, [app, velocity]);
 
   useEffect(() => {
@@ -645,29 +337,6 @@ function PixiScene({
   return <></>;
 }
 
-type DisplayMode = "message" | "stats" | "none";
-
-type ControlButtonCode =
-  | "ArrowUp"
-  | "ArrowDown"
-  | "ArrowLeft"
-  | "ArrowRight"
-  | "KeyA"
-  | "KeyD";
-
-type ButtonCode = ControlButtonCode | "KeyS" | "KeyM" | "KeyV";
-
-function isControlButton(code: ButtonCode): code is ControlButtonCode {
-  return (
-    code === "ArrowUp" ||
-    code === "ArrowDown" ||
-    code === "ArrowLeft" ||
-    code === "ArrowRight" ||
-    code === "KeyA" ||
-    code === "KeyD"
-  );
-}
-
 export const NotFound = () => {
   const { soundOn, setSoundOn } = useNoise();
   const [mode, setMode] = useState<DisplayMode>("message");
@@ -680,7 +349,7 @@ export const NotFound = () => {
     setVelocity,
     battery,
     setBattery,
-  } = useSasa();
+  } = useSasa(initialVelocity);
   const [buttonsDown, setButtonsDown] = useState<ButtonCode[]>([]);
   const timeouts = useRef<Map<ButtonCode, NodeJS.Timeout>>(new Map());
 
@@ -695,16 +364,7 @@ export const NotFound = () => {
   }, []);
 
   function toggleMode() {
-    setMode((prev) => {
-      switch (prev) {
-        case "message":
-          return "stats";
-        case "stats":
-          return "none";
-        case "none":
-          return "message";
-      }
-    });
+    setMode((prev) => nextDisplayMode(prev));
   }
 
   function transmit(fn: () => void) {
@@ -875,7 +535,7 @@ export const NotFound = () => {
         width={window.innerWidth}
         height={window.innerHeight}
       >
-        <PixiScene
+        <Scene
           transmitting={transmitting}
           velocity={velocity}
           battery={battery}
